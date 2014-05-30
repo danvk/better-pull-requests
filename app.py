@@ -14,8 +14,20 @@ def pulls(user, repo):
 @app.route("/pull/<user>/<repo>/<number>")
 def pull(user, repo, number):
     commits = github.get_pull_request_commits(user, repo, number)
+    pr = github.get_pull_request(user, repo, number)
+
+    for commit in commits:
+        commit['repo'] = pr['head.repo.full_name']
+
+    commits.append({
+        'repo': '%s/%s' % (user, repo),
+        'sha': pr['base.sha'],
+        'commit.message': '<i>%s</i>' % pr['base.ref'],
+        'author.login': ''
+    })
+
     def commit_fmt(c):
-        return "%s %s (%s)" % (c['sha'], c['commit.message'], c['author.login'])
+        return "<input type=radio sha=%s /> <input type=radio sha=%s /> %s %s (%s)" % (c['sha'], c['sha'], c['sha'], c['commit.message'], c['author.login'])
 
     return "Pull request %s<br/><br/>%s" % (
             number, '<br/>'.join([commit_fmt(c) for c in commits]))

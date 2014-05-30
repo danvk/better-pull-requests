@@ -12,18 +12,7 @@ def extract_path(json, path):
     except KeyError:
         return None
 
-
-def get_pull_requests(user, repo):
-    url = 'https://api.github.com/repos/%s/%s/pulls' % (user, repo)
-    r = requests.get(url)
-    if not r.ok:
-        # TODO(danvk): print error
-        sys.stderr.write('Request for %s failed.\n' % url)
-        return None
-
-    # See https://developer.github.com/v3/pulls/
-    pull_requests = r.json()
-    paths = ['number',
+PR_paths = ['number',
              'state',
              'title',
              'body',
@@ -38,11 +27,33 @@ def get_pull_requests(user, repo):
              'base.ref',  # e.g. master
              'base.sha'
             ]
+
+
+def get_pull_requests(user, repo):
+    url = 'https://api.github.com/repos/%s/%s/pulls' % (user, repo)
+    r = requests.get(url)
+    if not r.ok:
+        # TODO(danvk): print error
+        sys.stderr.write('Request for %s failed.\n' % url)
+        return None
+
+    # See https://developer.github.com/v3/pulls/
+    pull_requests = r.json()
+    paths = PR_paths
     return [{x: extract_path(p, x) for x in paths} for p in pull_requests]
 
 
 def get_pull_request(user, repo, pull_number):
+    url = 'https://api.github.com/repos/%s/%s/pulls/%s' % (user, repo, pull_number)
+    r = requests.get(url)
+    if not r.ok:
+        # TODO(danvk): print error
+        sys.stderr.write('Request for %s failed.\n' % url)
+        return None
 
+    pr = r.json()
+    paths = PR_paths
+    return {x: extract_path(pr, x) for x in paths}
 
 
 def get_pull_request_commits(user, repo, pull_number):
