@@ -1,0 +1,41 @@
+<!doctype html>
+<head>
+  <title>Pull Request View</title>
+</head>
+<body>
+<h2>Commits</h2>
+{% for commit in commits %}
+<input name='left' type=radio sha={{commit.sha}}>
+<input name='right' type=radio sha={{commit.sha}}>
+{{commit.sha}}
+{{commit.message}}
+{{commit.author}}
+<br>
+{% endfor %}
+
+<p><button id="diff">Show Diff</button></p>
+
+<h2>Files Changed</h2>
+<div id="files-changed"></div>
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<script type="text/javascript">
+$(function() {
+  var head_repo = '{{head_repo}}';
+  $('#diff').click(function() {
+    $('#files-changed').html('&hellip;');
+
+    var sha1 = $('input[name="left"]:checked').attr('sha'),
+        sha2 = $('input[name="right"]:checked').attr('sha');
+        $.getJSON('/diff', { repo: head_repo, sha1: sha1, sha2: sha2 })
+        .success(function(data) {
+          $('#files-changed').text(JSON.stringify(data));
+        })
+        .error(function(err) {
+          $('#files-changed').text(JSON.stringify(err));
+        });
+  });
+});
+</script>
+
+</body>

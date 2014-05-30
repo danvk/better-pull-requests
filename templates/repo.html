@@ -1,0 +1,14 @@
+<!doctype html>
+<head>
+  <title>Repo View</title>
+</head>
+<body>
+<h2>Pull Requests</h2>
+{% for pr in pull_requests %}
+<a href="{{pr.url|safe}}">{{pr.number}}</a>
+{{pr.title}}
+({{pr.user}})
+<br>
+{% endfor %}
+
+</body>

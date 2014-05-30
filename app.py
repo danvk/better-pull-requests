@@ -1,14 +1,22 @@
-import github
-from flask import Flask
+import json
+from flask import Flask, url_for, render_template, request, jsonify
 app = Flask(__name__)
 
-@app.route("/pulls/<user>/<repo>")
-def pulls(user, repo):
-    pull_requests = github.get_pull_requests(user, repo)
-    def pr_fmt(pr):
-        return "<a href='/pull/%s/%s/%s'>#%s</a> %s (%s)" % (user, repo, pr['number'], pr['number'], pr['title'], pr['user.login'])
+import github
+import git
 
-    return "Pull requests:<br/>%s" % '<br/>'.join([pr_fmt(p) for p in pull_requests])
+@app.route("/repo/<user>/<repo>")
+def repo(user, repo):
+    pull_requests = github.get_pull_requests(user, repo)
+
+    format_pull_requests = [{
+        'url': url_for('pull', user=user, repo=repo, number=pr['number']),
+        'number': pr['number'],
+        'title': pr['title'],
+        'user': pr['user.login']
+        } for pr in pull_requests]
+
+    return render_template('repo.html', pull_requests=format_pull_requests)
 
 
 @app.route("/pull/<user>/<repo>/<number>")
@@ -16,21 +24,34 @@ def pull(user, repo, number):
     commits = github.get_pull_request_commits(user, repo, number)
     pr = github.get_pull_request(user, repo, number)
 
-    for commit in commits:
-        commit['repo'] = pr['head.repo.full_name']
-
     commits.append({
-        'repo': '%s/%s' % (user, repo),
         'sha': pr['base.sha'],
-        'commit.message': '<i>%s</i>' % pr['base.ref'],
+        'commit.message': '(%s)' % pr['base.ref'],
         'author.login': ''
     })
 
-    def commit_fmt(c):
-        return "<input type=radio sha=%s /> <input type=radio sha=%s /> %s %s (%s)" % (c['sha'], c['sha'], c['sha'], c['commit.message'], c['author.login'])
+    format_commits = [{
+        'sha': commit['sha'],
+        'message': commit['commit.message'],
+        'author': commit['author.login']
+        } for commit in commits]
 
-    return "Pull request %s<br/><br/>%s" % (
-            number, '<br/>'.join([commit_fmt(c) for c in commits]))
+    return render_template('pull_request.html', commits=format_commits, user=user, repo=repo, head_repo=pr['head.repo.full_name'])
+
+
+@app.route("/diff", methods=["GET", "POST"])
+def diff():
+    repo = request.args.get('repo', '')
+    sha1 = request.args.get('sha1', '')
+    sha2 = request.args.get('sha2', '')
+    if not (repo and sha1 and sha2):
+        return "Incomplete request (need repo, sha1, sha2)"
+
+    clone_url = 'https://github.com/%s.git' % repo
+    differing_files = git.get_differing_files(clone_url, sha1, sha2)
+
+    return jsonify(files=differing_files)
+
 
 
 @app.route("/")
