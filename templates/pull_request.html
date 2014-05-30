@@ -21,7 +21,7 @@
 <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
 <script type="text/javascript">
 $(function() {
-  var head_repo = '{{head_repo}}';
+  var head_repo = {{head_repo|tojson|safe}};
   $('#diff').click(function() {
     $('#files-changed').html('&hellip;');
 
@@ -30,6 +30,7 @@ $(function() {
         $.getJSON('/diff', { repo: head_repo, sha1: sha1, sha2: sha2 })
         .success(function(data) {
           $('#files-changed').text(JSON.stringify(data));
+          console.log(data);
         })
         .error(function(err) {
           $('#files-changed').text(JSON.stringify(err));

@@ -49,8 +49,10 @@ def diff():
 
     clone_url = 'https://github.com/%s.git' % repo
     differing_files = git.get_differing_files(clone_url, sha1, sha2)
+    before = {p: git.get_file_at_ref(clone_url, p, sha1) for p in differing_files}
+    after = {p: git.get_file_at_ref(clone_url, p, sha2) for p in differing_files}
 
-    return jsonify(files=differing_files)
+    return jsonify(files=differing_files, before=before, after=after)
 
 
 

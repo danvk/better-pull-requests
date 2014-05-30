@@ -75,19 +75,17 @@ def _does_sha_exist(clone_url, sha):
     return pr.returncode == 0
 
 
-def get_differing_files(clone_url, sha1, sha2):
-    sys.stderr.write('%s\n' % _does_sha_exist(clone_url, sha1))
-    sys.stderr.write('%s\n' % _does_sha_exist(clone_url, sha2))
-    sys.stderr.write(clone_url + '\n')
-
-    if not (_does_sha_exist(clone_url, sha1) and
-            _does_sha_exist(clone_url, sha2)):
+def _clone_if_no_sha(clone_url, sha):
+    if not _does_sha_exist(clone_url, sha):
         clone_repo(clone_url)
+    if not _does_sha_exist(clone_url, sha):
+        sys.stderr.write('Unable to get %s from %s\n' % (sha, clone_url))
+        return False
+    return True
 
-    if not (_does_sha_exist(clone_url, sha1) and
-            _does_sha_exist(clone_url, sha2)):
-        sys.stderr.write('Unable to get %s and %s from %s\n' % (
-            sha1, sha2, clone_url))
+
+def get_differing_files(clone_url, sha1, sha2):
+    if not (_clone_if_no_sha(clone_url, sha1) and _clone_if_no_sha(clone_url, sha2)):
         return False
 
     d = CLONE_URL_TO_DIR[clone_url]
@@ -102,4 +100,21 @@ def get_differing_files(clone_url, sha1, sha2):
     if pr.returncode != 0:
         return None
 
-    return stdout.split('\n')
+    return [x for x in stdout.split('\n') if x]
+
+
+def get_file_at_ref(clone_url, path, ref):
+    if not _clone_if_no_sha(clone_url, ref):
+        return False
+
+    d = CLONE_URL_TO_DIR[clone_url]
+    pr = subprocess.Popen(['/usr/bin/git', 'show', '%s:%s' % (ref, path)],
+           cwd=d,
+           stdout=subprocess.PIPE, 
+           stderr=subprocess.PIPE, 
+           shell=False)
+    (stdout, stderr) = pr.communicate()
+    sys.stderr.write(stderr)
+    if pr.returncode != 0:
+        return None
+    return stdout
