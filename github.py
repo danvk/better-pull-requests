@@ -41,6 +41,10 @@ def get_pull_requests(user, repo):
     return [{x: extract_path(p, x) for x in paths} for p in pull_requests]
 
 
+def get_pull_request(user, repo, pull_number):
+
+
+
 def get_pull_request_commits(user, repo, pull_number):
     url = 'https://api.github.com/repos/%s/%s/pulls/%s/commits' % (user, repo, pull_number)
 
