@@ -1,6 +1,12 @@
 <!doctype html>
 <head>
   <title>Pull Request View</title>
+  <link rel=stylesheet href="/static/jsdifflib/diffview.css">
+  <style>
+.diff {
+  max-width: 1600px;
+}
+  </style>
 </head>
 <body>
 <h2>Commits</h2>
@@ -19,9 +25,49 @@
 <div id="files-changed"></div>
 
 <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<script src="/static/jsdifflib/difflib.js"></script>
+<script src="/static/jsdifflib/diffview.js"></script>
 <script type="text/javascript">
+function displayDiffs(data) {
+  $('#files-changed').empty();
+  data.files.forEach(function(file) {
+      var baseTxt = data.before[file] || '';
+      var afterTxt = data.after[file] || '';
+
+      var diffoutputdiv = $('<div class="diff"></div>').get(0);
+
+      // From https://github.com/cemerick/jsdifflib
+      var baseLines = difflib.stringAsLines(baseTxt);
+      var afterLines = difflib.stringAsLines(afterTxt);
+
+      // create a SequenceMatcher instance that diffs the two sets of lines
+      var sm = new difflib.SequenceMatcher(baseLines, afterLines);
+
+      // get the opcodes from the SequenceMatcher instance
+      // opcodes is a list of 3-tuples describing what changes should be made to the base text
+      // in order to yield the new text
+      var opcodes = sm.get_opcodes();
+      var contextSize = 10;
+
+      // build the diff view and add it to the current DOM
+      diffoutputdiv.appendChild(diffview.buildView({
+          baseTextLines: baseLines,
+          newTextLines: afterLines,
+          opcodes: opcodes,
+          // set the display titles for each resource
+          baseTextName: "Before",
+          newTextName: "After",
+          contextSize: contextSize,
+          viewType: 0
+      }));
+
+      $('#files-changed').append(['<h2>' + file + '</h2>', diffoutputdiv]);
+  });
+}
+
 $(function() {
   var head_repo = {{head_repo|tojson|safe}};
+  
   $('#diff').click(function() {
     $('#files-changed').html('&hellip;');
 
@@ -29,13 +75,17 @@ $(function() {
         sha2 = $('input[name="right"]:checked').attr('sha');
         $.getJSON('/diff', { repo: head_repo, sha1: sha1, sha2: sha2 })
         .success(function(data) {
-          $('#files-changed').text(JSON.stringify(data));
-          console.log(data);
+          displayDiffs(data);
         })
         .error(function(err) {
           $('#files-changed').text(JSON.stringify(err));
         });
   });
+
+  // Default view
+  $('input[name=left]:last').click();
+  $('input[name=right]:first').click();
+  $('#diff').click();
 });
 </script>
 

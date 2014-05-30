@@ -68,9 +68,9 @@ def get_pull_request_commits(user, repo, pull_number):
     # See https://developer.github.com/v3/pulls/#list-commits-on-a-pull-request
     commits = r.json()
     paths = ['sha',
-            'commit.author.date',
-            'commit.message',
-            'commit.comment_count',
-            'author.login'
+             'commit.author.date',
+             'commit.message',
+             'commit.comment_count',
+             'author.login'
             ]
     return [{x: extract_path(p, x) for x in paths} for p in commits]
