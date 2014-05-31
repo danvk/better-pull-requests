@@ -30,7 +30,7 @@ PR_paths = ['number',
 
 # TODO(danvk): only use this in debug mode.
 API_CACHE = {}
-TOKEN = '8f8bc84194757b121da3d45d7c50e6bc22e527ca'
+TOKEN = '59c0f1b073b84f91b43c6e3182a2bcc078afc90a'
 
 def _fetch_api(url):
     if url in API_CACHE:
