@@ -6,6 +6,9 @@
 .diff {
   max-width: 1600px;
 }
+.comment-body {
+  white-space: pre;
+}
   </style>
 </head>
 <body>
@@ -23,6 +26,13 @@
 
 <h2>Files Changed</h2>
 <div id="files-changed"></div>
+
+<h2>Discussion</h2>
+{% for comment in comments.top_level %}
+<p>{{comment.updated_at}} {{ comment.user.login }}:<br>
+<div class="comment-body">{{comment.body}}</div></p>
+<hr/>
+{% endfor %}
 
 <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
 <script src="/static/jsdifflib/difflib.js"></script>
@@ -65,8 +75,48 @@ function displayDiffs(data) {
   });
 }
 
+// Like itertools.groupBy, not _.groupBy
+function groupConsecutive(arr, fn) {
+  var groups = [];
+  var current, last;
+  for (var i = 0; i < arr.length; i++) {
+    var val = fn(arr[i]);
+    if (i == 0 || val != last) {
+      if (current) groups.push(current);
+      current = [arr[i]];
+      last = val;
+    } else {
+      current.push(arr[i]);
+    }
+  }
+  if (current) groups.push(current);
+  return groups;
+}
+
+// Change '> So and so wrote:' to '<a href>...</a>'
+function collapse_quotes(div) {
+  var lines = $(div).html().split('\n');
+  var groupedLines =
+    groupConsecutive(lines, function(line) { return line.substr(0, 4) == '&gt;' });
+
+  var result = [];
+  for (var i = 0; i < groupedLines.length; i++) {
+    var group = groupedLines[i];
+    var is_quoted = (group[0].substr(0, 4) == '&gt;');
+    if (is_quoted) {
+      var $link = $('<a class=collapsed-ellipsis href=#>&hellip;</a>').data('contents', group.join('\n'));
+      result.push($link);
+    } else {
+      result.push(group.join('\n'));
+    }
+  }
+  $(div).empty().append(result);
+}
+
+var head_repo = {{head_repo|tojson|safe}};
+var diff_comments = {{comments.diff_level|tojson|safe}};
+
 $(function() {
-  var head_repo = {{head_repo|tojson|safe}};
   
   $('#diff').click(function() {
     $('#files-changed').html('&hellip;');
@@ -86,6 +136,9 @@ $(function() {
   $('input[name=left]:last').click();
   $('input[name=right]:first').click();
   $('#diff').click();
+
+  // Simplify comment view
+  $('.comment-body').map(function(_, div) { collapse_quotes(div) });
 });
 </script>
 

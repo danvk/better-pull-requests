@@ -23,6 +23,7 @@ def repo(user, repo):
 def pull(user, repo, number):
     commits = github.get_pull_request_commits(user, repo, number)
     pr = github.get_pull_request(user, repo, number)
+    comments = github.get_pull_request_comments(user, repo, number)
 
     commits.append({
         'sha': pr['base.sha'],
@@ -36,7 +37,7 @@ def pull(user, repo, number):
         'author': commit['author.login']
         } for commit in commits]
 
-    return render_template('pull_request.html', commits=format_commits, user=user, repo=repo, head_repo=pr['head.repo.full_name'])
+    return render_template('pull_request.html', commits=format_commits, user=user, repo=repo, head_repo=pr['head.repo.full_name'], comments=comments)
 
 
 @app.route("/diff", methods=["GET", "POST"])
