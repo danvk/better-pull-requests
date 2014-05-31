@@ -68,6 +68,7 @@ def get_pull_request(user, repo, pull_number):
 
 
 def get_pull_request_commits(user, repo, pull_number):
+    """Returns commits from first to last."""
     url = 'https://api.github.com/repos/%s/%s/pulls/%s/commits' % (user, repo, pull_number)
     commits = _fetch_api(url)
 
@@ -81,7 +82,9 @@ def get_pull_request_commits(user, repo, pull_number):
              'commit.comment_count',
              'author.login'
             ]
-    return [{x: extract_path(p, x) for x in paths} for p in commits]
+    commits = [{x: extract_path(p, x) for x in paths} for p in commits]
+    commits.sort(key=lambda x: x['commit.author.date'])
+    return commits
 
 
 def get_pull_request_comments(user, repo, pull_number):
@@ -91,8 +94,8 @@ def get_pull_request_comments(user, repo, pull_number):
     issue_url = 'https://api.github.com/repos/%s/%s/issues/%s/comments' % (user, repo, pull_number)
     pr_url = 'https://api.github.com/repos/%s/%s/pulls/%s/comments' % (user, repo, pull_number)
 
-    issue_comments = _fetch_api(issue_url)
-    pr_comments = _fetch_api(pr_url)
+    issue_comments = _fetch_api(issue_url) or []
+    pr_comments = _fetch_api(pr_url) or []
 
     issue_paths = {'id': 'id', 'user.login': 'user', 'updated_at': 'time', 'body': 'body'}
     pr_paths = {
@@ -101,7 +104,8 @@ def get_pull_request_comments(user, repo, pull_number):
             'original_position': 'original_position',
             'commit_id': 'commit_id',
             'original_commit_id': 'original_commit_id',
-            'diff_hunk': 'diff_hunk'}.update(issue_paths)
+            'diff_hunk': 'diff_hunk'}
+    pr_paths.update(issue_paths)
 
     return {
         'top_level': issue_comments,

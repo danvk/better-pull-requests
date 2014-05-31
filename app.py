@@ -1,9 +1,11 @@
+from collections import defaultdict
 import json
-from flask import Flask, url_for, render_template, request, jsonify
-app = Flask(__name__)
 
+from flask import Flask, url_for, render_template, request, jsonify
 import github
 import git
+
+app = Flask(__name__)
 
 @app.route("/repo/<user>/<repo>")
 def repo(user, repo):
@@ -25,16 +27,24 @@ def pull(user, repo, number):
     pr = github.get_pull_request(user, repo, number)
     comments = github.get_pull_request_comments(user, repo, number)
 
+    commit_to_comments = defaultdict(int)
+    for comment in comments['diff_level']:
+        commit_to_comments[comment['original_commit_id']] += 1
+
+    commits.reverse()
     commits.append({
         'sha': pr['base.sha'],
         'commit.message': '(%s)' % pr['base.ref'],
+        'commit.author.date': '',
         'author.login': ''
     })
 
     format_commits = [{
         'sha': commit['sha'],
         'message': commit['commit.message'],
-        'author': commit['author.login']
+        'author': commit['author.login'],
+        'time': commit['commit.author.date'],
+        'comment_count': commit_to_comments[commit['sha']]
         } for commit in commits]
 
     return render_template('pull_request.html', commits=format_commits, user=user, repo=repo, head_repo=pr['head.repo.full_name'], comments=comments)

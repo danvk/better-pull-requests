@@ -9,6 +9,12 @@
 .comment-body {
   white-space: pre;
 }
+.inline-comment {
+  background: lightgray;
+  border: 1px solid black;
+  padding: 3px;
+  margin: 3px -0.3em;
+}
   </style>
 </head>
 <body>
@@ -16,9 +22,10 @@
 {% for commit in commits %}
 <input name='left' type=radio sha={{commit.sha}}>
 <input name='right' type=radio sha={{commit.sha}}>
+{{commit.time}}
 {{commit.sha}}
 {{commit.message}}
-{{commit.author}}
+{{commit.author}} ({{commit.comment_count}} comments)
 <br>
 {% endfor %}
 
@@ -35,10 +42,21 @@
 {% endfor %}
 
 <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<script src="//underscorejs.org/underscore.js"></script>
 <script src="/static/jsdifflib/difflib.js"></script>
 <script src="/static/jsdifflib/diffview.js"></script>
 <script type="text/javascript">
-function displayDiffs(data) {
+function filterObject(obj, fn) {
+  var ret = {};
+  for (var k in obj) {
+    if (fn(k, obj[k])) {
+      ret[k] = obj[k]
+    }
+  }
+  return ret;
+}
+
+function displayDiffs(before_ref, after_ref, data) {
   $('#files-changed').empty();
   data.files.forEach(function(file) {
       var baseTxt = data.before[file] || '';
@@ -72,6 +90,40 @@ function displayDiffs(data) {
       }));
 
       $('#files-changed').append(['<h2>' + file + '</h2>', diffoutputdiv]);
+
+      // TODO(danvk): show comments on the 'before' side, too.
+      var comments = _.filter(diff_comments, function(comment) {
+          return comment.original_commit_id == after_ref &&
+              comment.path == file;
+      });
+
+      comments.map(function(comment) {
+          var diff_hunk_lines = comment.diff_hunk.split('\n');
+          var diff_header = diff_hunk_lines[0];
+          var m = /^@@ (-?[0-9]+),([0-9]+) (\+?[0-9]+),([0-9]+) @@/.exec(diff_header);
+          if (!m) {
+            console.warn("Couldn't parse diff header", diff_header);
+            return;
+          }
+          var line_no = parseInt(m[3], 10);
+          // comment.original_position = line number in the unified diff.
+          // sometimes it's way larger than the number of lines in the diff.
+          // In these cases, github shows it at the end of the diff.
+          // We mirror this behavior.
+          for (var i = 0; i < Math.min(comment.original_position, diff_hunk_lines.length); i++) {
+            if (diff_hunk_lines[i].substr(0, 1) != '-') {
+              line_no++;
+            }
+          }
+
+          var $diff_td = $(diffoutputdiv).find('.after.line-' + line_no);
+          if ($diff_td.length == 0) {
+            console.warn('Unable to display comment on diff', comment);
+            return;
+          }
+
+          $diff_td.append($('<div class="inline-comment"></div>').text(comment.user + ' ' + comment.time + '\n' + comment.body));
+      });
   });
 }
 
@@ -125,7 +177,7 @@ $(function() {
         sha2 = $('input[name="right"]:checked').attr('sha');
         $.getJSON('/diff', { repo: head_repo, sha1: sha1, sha2: sha2 })
         .success(function(data) {
-          displayDiffs(data);
+          displayDiffs(sha1, sha2, data);
         })
         .error(function(err) {
           $('#files-changed').text(JSON.stringify(err));
