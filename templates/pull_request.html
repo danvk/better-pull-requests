@@ -41,115 +41,34 @@
 <hr/>
 {% endfor %}
 
-<script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
-<script src="//underscorejs.org/underscore.js"></script>
+<script src="/static/jquery-2.1.1.min.js"></script>
+<script src="/static/underscore-min.js"></script>
 <script src="/static/jsdifflib/difflib.js"></script>
 <script src="/static/jsdifflib/diffview.js"></script>
 <script src="/static/pull_request.js"></script>
 <script type="text/javascript">
-function filterObject(obj, fn) {
-  var ret = {};
-  for (var k in obj) {
-    if (fn(k, obj[k])) {
-      ret[k] = obj[k]
-    }
-  }
-  return ret;
-}
 
 function displayDiffs(before_ref, after_ref, data) {
   $('#files-changed').empty();
   data.files.forEach(function(file) {
       var baseTxt = data.before[file] || '';
       var afterTxt = data.after[file] || '';
+      var diffDiv = renderDiff(baseTxt, afterTxt);
 
-      var diffoutputdiv = $('<div class="diff"></div>').get(0);
+      $('#files-changed').append(['<h2>' + file + '</h2>', diffDiv]);
 
-      // From https://github.com/cemerick/jsdifflib
-      var baseLines = difflib.stringAsLines(baseTxt);
-      var afterLines = difflib.stringAsLines(afterTxt);
-
-      // create a SequenceMatcher instance that diffs the two sets of lines
-      var sm = new difflib.SequenceMatcher(baseLines, afterLines);
-
-      // get the opcodes from the SequenceMatcher instance
-      // opcodes is a list of 3-tuples describing what changes should be made to the base text
-      // in order to yield the new text
-      var opcodes = sm.get_opcodes();
-      var contextSize = 10;
-
-      // build the diff view and add it to the current DOM
-      diffoutputdiv.appendChild(diffview.buildView({
-          baseTextLines: baseLines,
-          newTextLines: afterLines,
-          opcodes: opcodes,
-          // set the display titles for each resource
-          baseTextName: "Before",
-          newTextName: "After",
-          contextSize: contextSize,
-          viewType: 0
-      }));
-
-      $('#files-changed').append(['<h2>' + file + '</h2>', diffoutputdiv]);
-
-      // TODO(danvk): show comments on the 'before' side, too.
       var comments = _.filter(diff_comments, function(comment) {
           return comment.original_commit_id == after_ref &&
               comment.path == file;
       });
 
       comments.map(function(comment) {
-        var pos = parseDiffPosition(comment.diff_hunk, comment.original_position);
-        var lineNumber = pos.lineNumber;
-        var sideClass = pos.onLeft ? 'before' : 'after';
-
-        var $diff_td = $(diffoutputdiv).find('.' + sideClass + '.line-' + lineNumber);
-        if ($diff_td.length == 0) {
-          console.warn('Unable to display comment on diff', comment);
-          return;
-        }
-
-        $diff_td.append($('<div class="inline-comment"></div>').text(comment.user + ' ' + comment.time + '\n' + comment.body));
+        var pos =
+            parseDiffPosition(comment.diff_hunk, comment.original_position);
+        var lineEl = findDomElementForPosition(diffDiv, pos);
+        $(lineEl).append(renderComment(comment));
       });
   });
-}
-
-// Like itertools.groupBy, not _.groupBy
-function groupConsecutive(arr, fn) {
-  var groups = [];
-  var current, last;
-  for (var i = 0; i < arr.length; i++) {
-    var val = fn(arr[i]);
-    if (i == 0 || val != last) {
-      if (current) groups.push(current);
-      current = [arr[i]];
-      last = val;
-    } else {
-      current.push(arr[i]);
-    }
-  }
-  if (current) groups.push(current);
-  return groups;
-}
-
-// Change '> So and so wrote:' to '<a href>...</a>'
-function collapse_quotes(div) {
-  var lines = $(div).html().split('\n');
-  var groupedLines =
-    groupConsecutive(lines, function(line) { return line.substr(0, 4) == '&gt;' });
-
-  var result = [];
-  for (var i = 0; i < groupedLines.length; i++) {
-    var group = groupedLines[i];
-    var is_quoted = (group[0].substr(0, 4) == '&gt;');
-    if (is_quoted) {
-      var $link = $('<a class=collapsed-ellipsis href=#>&hellip;</a>').data('contents', group.join('\n'));
-      result.push($link);
-    } else {
-      result.push(group.join('\n'));
-    }
-  }
-  $(div).empty().append(result);
 }
 
 var head_repo = {{head_repo|tojson|safe}};
@@ -177,7 +96,7 @@ $(function() {
   $('#diff').click();
 
   // Simplify comment view
-  $('.comment-body').map(function(_, div) { collapse_quotes(div) });
+  $('.comment-body').map(function(_, div) { collapseQuotes(div) });
 });
 </script>
 
