@@ -13,7 +13,7 @@
 {{commit.time}}
 {{commit.sha}}
 {{commit.message}}
-{{commit.author}} ({{commit.comment_count}} comments)
+{{commit.author}} <span sha={{commit.sha}} class="comment-count"></span>
 <br>
 {% endfor %}
 <input type=hidden name=path value="{{path}}">
@@ -26,11 +26,11 @@
 
 <div id="prev-next">
 {% if prev_file %}
-<a class="prev" href="prev_file.link">&larr; {{prev_file.path}}</a>
+<a class="prev" href="{{prev_file.link}}">&larr; {{prev_file.path}}</a>
 {% endif %}
 &nbsp;
 {% if next_file %}
-<a class="next" href="next_file.link">{{next_file.path}} &rarr;</a>
+<a class="next" href="{{next_file.link}}">{{next_file.path}} &rarr;</a>
 {% endif %}
 </div>
 
@@ -63,6 +63,15 @@ function displayDiffs(before_ref, after_ref, baseTxt, afterTxt) {
   var diffDiv = renderDiff(baseTxt, afterTxt);
 
   $('#thediff').append(diffDiv);
+
+  // Fill in the "(2 comments)" fields.
+  // TODO(danvk): do this in the python server.
+  var commentsByRef =
+      _.groupBy(_.filter(diff_comments, function(comment) { return comment.path == {{path|tojson}} }), function(comment) { return comment.original_commit_id });
+
+  _.forEach(commentsByRef, function(comments, sha) {
+      $('.comment-count[sha=' + sha + ']').text('(' + comments.length + ' comments)');
+  });
 
   var comments = _.filter(diff_comments, function(comment) {
       return (comment.original_commit_id == after_ref ||
