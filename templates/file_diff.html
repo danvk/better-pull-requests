@@ -18,15 +18,23 @@
 
 <p><button id="diff">Show Diff</button></p>
 
-<h2>Files Changed</h2>
-<div id="files-changed"></div>
+<h2>{{path}}</h2>
+<div id="thediff"></div>
 
-<h2>Discussion</h2>
-{% for comment in comments.top_level %}
-<p>{{comment.updated_at}} {{ comment.user.login }}:<br>
-<div class="comment-body">{{comment.body}}</div></p>
-<hr/>
+<h2>Files Changed</h2>
+<div id="files-changed">
+{% for differing_file in differing_files %}
+{% if differing_file.path == path %}
+<div class="diff-link diff-current">
+  {{differing_file.path}}
+</div>
+{% else %}
+<div class="diff-link">
+  <a href="{{differing_file.link}}">{{differing_file.path}}</a>
+</div>
+{% endif %}
 {% endfor %}
+</div>
 
 <script src="/static/jquery-2.1.1.min.js"></script>
 <script src="/static/underscore-min.js"></script>
@@ -35,31 +43,29 @@
 <script src="/static/pull_request.js"></script>
 
 <script type="text/javascript">
-function displayDiffs(before_ref, after_ref, data) {
-  $('#files-changed').empty();
-  data.files.forEach(function(file) {
-      var baseTxt = data.before[file] || '';
-      var afterTxt = data.after[file] || '';
-      var diffDiv = renderDiff(baseTxt, afterTxt);
+var beforeContents = {{before_contents|tojson|safe}};
+var afterContents = {{after_contents|tojson|safe}};
 
-      $('#files-changed').append(['<h2>' + file + '</h2>', diffDiv]);
+function displayDiffs(before_ref, after_ref, baseTxt, afterTxt) {
+  var diffDiv = renderDiff(baseTxt, afterTxt);
 
-      var comments = _.filter(diff_comments, function(comment) {
-          return (comment.original_commit_id == after_ref ||
-                  comment.original_commit_id == before_ref) &&
-                 comment.path == file;
-      });
+  $('#thediff').append(diffDiv);
 
-      comments.map(function(comment) {
-        var pos =
-            parseDiffPosition(comment.diff_hunk, comment.original_position);
-        if (comment.original_commit_id == before_ref) {
-          pos.onLeft = !pos.onLeft;
-        }
+  var comments = _.filter(diff_comments, function(comment) {
+      return (comment.original_commit_id == after_ref ||
+              comment.original_commit_id == before_ref) &&
+          comment.path == {{path|tojson}};
+  });
 
-        var lineEl = findDomElementForPosition(diffDiv, pos);
-        $(lineEl).append(renderComment(comment));
-      });
+  comments.map(function(comment) {
+    var pos =
+        parseDiffPosition(comment.diff_hunk, comment.original_position);
+    if (comment.original_commit_id == before_ref) {
+      pos.onLeft = !pos.onLeft;
+    }
+
+    var lineEl = findDomElementForPosition(diffDiv, pos);
+    $(lineEl).append(renderComment(comment));
   });
 }
 
@@ -68,26 +74,12 @@ var diff_comments = {{comments.diff_level|tojson|safe}};
 
 $(function() {
   $('#diff').click(function() {
-    $('#files-changed').html('&hellip;');
-
-    var sha1 = $('input[name="left"]:checked').attr('sha'),
-        sha2 = $('input[name="right"]:checked').attr('sha');
-        $.getJSON('/diff', { repo: head_repo, sha1: sha1, sha2: sha2 })
-        .success(function(data) {
-          displayDiffs(sha1, sha2, data);
-        })
-        .error(function(err) {
-          $('#files-changed').text(JSON.stringify(err));
-        });
   });
-
-  // Default view
-  $('input[name=left]:last').click();
-  $('input[name=right]:first').click();
-  $('#diff').click();
 
   // Simplify comment view
   $('.comment-body').map(function(_, div) { collapseQuotes(div) });
+
+  displayDiffs({{sha1|tojson|safe}}, {{sha2|tojson|safe}}, beforeContents, afterContents);
 });
 </script>
 </body>

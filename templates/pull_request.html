@@ -38,36 +38,25 @@
 <script src="/static/pull_request.js"></script>
 
 <script type="text/javascript">
+var user = {{user|tojson}};
+var repo = {{repo|tojson}};
+var pr_number = {{pull_request.number|tojson}};
+
+// TODO(danvk): do this server-side in Jinja, not in JavaScript
 function displayDiffs(before_ref, after_ref, data) {
   $('#files-changed').empty();
+  var diffUrlBase = '/pull/' + user + '/' + repo + '/' + pr_number + '/diff';
   data.files.forEach(function(file) {
-      var baseTxt = data.before[file] || '';
-      var afterTxt = data.after[file] || '';
-      var diffDiv = renderDiff(baseTxt, afterTxt);
-
-      $('#files-changed').append(['<h2>' + file + '</h2>', diffDiv]);
-
-      var comments = _.filter(diff_comments, function(comment) {
-          return (comment.original_commit_id == after_ref ||
-                  comment.original_commit_id == before_ref) &&
-                 comment.path == file;
-      });
-
-      comments.map(function(comment) {
-        var pos =
-            parseDiffPosition(comment.diff_hunk, comment.original_position);
-        if (comment.original_commit_id == before_ref) {
-          pos.onLeft = !pos.onLeft;
-        }
-
-        var lineEl = findDomElementForPosition(diffDiv, pos);
-        $(lineEl).append(renderComment(comment));
-      });
+    var diffUrl = diffUrlBase +
+        '?path=' + escape(file) +
+        '&sha1=' + escape(before_ref) +
+        '&sha2=' + escape(after_ref);
+    $('#files-changed').append($('<a href></a>').text(file).attr('href', diffUrl));
   });
+  $('#files-changed a').wrap('<div class=diff-link></div>');
 }
 
 var head_repo = {{head_repo|tojson|safe}};
-var diff_comments = {{comments.diff_level|tojson|safe}};
 
 $(function() {
   $('#diff').click(function() {
