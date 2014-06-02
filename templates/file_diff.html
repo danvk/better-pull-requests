@@ -108,7 +108,12 @@ $(function() {
     } else if (e.keyCode == 74) {  // j
       // Any better way to visit links?
       window.location = $('a.next').attr('href');
+    } else if (e.keyCode == 78) { // n
+      // next comment
+    } else if (e.keyCode == 80) { // p
+      // previous comment
     }
+    // console.log(e.keyCode);
   });
 });
 </script>
