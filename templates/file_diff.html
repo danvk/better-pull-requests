@@ -6,17 +6,20 @@
 </head>
 <body>
 <h2>Commits</h2>
+<form action='#'>
 {% for commit in commits %}
-<input name='left' type=radio sha={{commit.sha}}>
-<input name='right' type=radio sha={{commit.sha}}>
+<input name='sha1' type=radio value={{commit.sha}} {%if commit.sha == sha1%}checked{%endif%}>
+<input name='sha2' type=radio value={{commit.sha}} {%if commit.sha == sha2%}checked{%endif%}>
 {{commit.time}}
 {{commit.sha}}
 {{commit.message}}
 {{commit.author}} ({{commit.comment_count}} comments)
 <br>
 {% endfor %}
+<input type=hidden name=path value="{{path}}">
 
-<p><button id="diff">Show Diff</button></p>
+<p><input type=submit id="diff" value="Show Diff"></p>
+</form>
 
 <h2>{{path}}</h2>
 <div id="thediff"></div>
