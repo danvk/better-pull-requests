@@ -1,0 +1,30 @@
+body {
+  font-size: 14px;
+  font-family: Helvetica, arial, freesans, clean, sans-serif;
+}
+
+.diff {
+  font-size: 12px;
+}
+
+
+table.diff tbody {
+  font-family:Courier, monospace
+}
+
+td.before, td.after, td.skip {
+  /* This is the width of an 80-char line at 12px in Courier */
+  width: 555px;
+  max-width: 555px;
+  min-width: 555px;
+}
+
+.comment-body {
+  white-space: pre;
+}
+.inline-comment {
+  background: lightgray;
+  border: 1px solid black;
+  padding: 3px;
+  margin: 3px -0.3em;
+}

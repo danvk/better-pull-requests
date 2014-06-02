@@ -141,7 +141,8 @@ function renderDiff(contentsBefore, contentsAfter) {
       baseTextName: "Before",
       newTextName: "After",
       contextSize: contextSize,
-      viewType: 0  // i.e. two column rather than inline.
+      viewType: 0,  // i.e. two column rather than inline.
+      characterDiffs: true
   }));
 
   return diffDiv;
@@ -183,3 +184,4 @@ function renderComment(comment) {
       .text(comment.user + ' ' + comment.time + '\n' + comment.body)
       .get(0);
 }
+

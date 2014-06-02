@@ -1,13 +1,10 @@
 <!doctype html>
 <head>
-  <title>Pull Request View</title>
+  <title>File Diff View</title>
   <link rel=stylesheet href="/static/jsdifflib/diffview.css">
   <link rel=stylesheet href="/static/pull_request.css">
 </head>
 <body>
-<h2>{{pull_request.title}}</h2>
-<p class="description">{{pull_request.body}}</p>
-
 <h2>Commits</h2>
 {% for commit in commits %}
 <input name='left' type=radio sha={{commit.sha}}>
@@ -93,5 +90,5 @@ $(function() {
   $('.comment-body').map(function(_, div) { collapseQuotes(div) });
 });
 </script>
-
 </body>
+</html>

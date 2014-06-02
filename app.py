@@ -47,7 +47,7 @@ def pull(user, repo, number):
         'comment_count': commit_to_comments[commit['sha']]
         } for commit in commits]
 
-    return render_template('pull_request.html', commits=format_commits, user=user, repo=repo, head_repo=pr['head.repo.full_name'], comments=comments)
+    return render_template('pull_request.html', commits=format_commits, user=user, repo=repo, head_repo=pr['head.repo.full_name'], pull_request=pr, comments=comments)
 
 
 @app.route("/diff", methods=["GET", "POST"])
