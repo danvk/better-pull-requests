@@ -95,13 +95,21 @@ var head_repo = {{head_repo|tojson|safe}};
 var diff_comments = {{comments.diff_level|tojson|safe}};
 
 $(function() {
-  $('#diff').click(function() {
-  });
-
   // Simplify comment view
   $('.comment-body').map(function(_, div) { collapseQuotes(div) });
 
   displayDiffs({{sha1|tojson|safe}}, {{sha2|tojson|safe}}, beforeContents, afterContents);
+
+  $(document).on('keydown', function(e) {
+    if (e.ctrlKey || e.altKey || e.metaKey) return;
+    if (e.keyCode == 75) {  // k
+      // Any better way to visit links?
+      window.location = $('a.prev').attr('href');
+    } else if (e.keyCode == 74) {  // j
+      // Any better way to visit links?
+      window.location = $('a.next').attr('href');
+    }
+  });
 });
 </script>
 </body>
