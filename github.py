@@ -1,14 +1,16 @@
 import sys
+import logging
+import json
 
 import requests
 
 
-def extract_path(json, path):
+def extract_path(json_data, path):
     parts = path.split('.')
     try:
         for part in parts:
-            json = json[part]
-        return json
+            json_data = json_data[part]
+        return json_data
     except KeyError:
         return None
 
@@ -35,6 +37,7 @@ TOKEN = '59c0f1b073b84f91b43c6e3182a2bcc078afc90a'
 def _fetch_api(url):
     if url in API_CACHE:
         return API_CACHE[url]
+    sys.stderr.write('Uncached request for %s\n' % url)
 
     r = requests.get(url, headers={'Authorization': 'token ' + TOKEN})
     if not r.ok:
@@ -59,9 +62,10 @@ def get_pull_requests(user, repo):
 
 def get_pull_request(user, repo, pull_number):
     url = 'https://api.github.com/repos/%s/%s/pulls/%s' % (user, repo, pull_number)
-    pr = _fetch_api(url)
-    if not pr:
-        return None
+    #pr = _fetch_api(url)
+    #if not pr:
+    #    return None
+    pr = json.load(file('/tmp/pull-296.json'))
 
     paths = PR_paths
     return {x: extract_path(pr, x) for x in paths}
@@ -70,7 +74,8 @@ def get_pull_request(user, repo, pull_number):
 def get_pull_request_commits(user, repo, pull_number):
     """Returns commits from first to last."""
     url = 'https://api.github.com/repos/%s/%s/pulls/%s/commits' % (user, repo, pull_number)
-    commits = _fetch_api(url)
+    # commits = _fetch_api(url)
+    commits = json.load(file('/tmp/commits.json'))
 
     if not commits:
         return None
@@ -94,8 +99,10 @@ def get_pull_request_comments(user, repo, pull_number):
     issue_url = 'https://api.github.com/repos/%s/%s/issues/%s/comments' % (user, repo, pull_number)
     pr_url = 'https://api.github.com/repos/%s/%s/pulls/%s/comments' % (user, repo, pull_number)
 
-    issue_comments = _fetch_api(issue_url) or []
-    pr_comments = _fetch_api(pr_url) or []
+    #issue_comments = _fetch_api(issue_url) or []
+    issue_comments = []
+    #pr_comments = _fetch_api(pr_url) or []
+    pr_comments = json.load(file('/tmp/comments.json'))
 
     issue_paths = {'id': 'id', 'user.login': 'user', 'updated_at': 'time', 'body': 'body'}
     pr_paths = {
