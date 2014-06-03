@@ -1,0 +1,18 @@
+<!doctype html>
+<html>
+<head>
+</head>
+<body>
+<h2>Redirecting for authorization&hellip;</h2>
+<script type="text/javascript">
+// TODO(danvk): get redirect UI from server
+// TODO(danvk): make a real effort to set state
+var url = 'https://github.com/login/oauth/authorize' +
+    '?client_id=a9c607c208c3155a26dd' +
+    '&redirect_uri=' + escape("http://localhost:5000/oauth_callback") +
+    '&scope=repo,user' + 
+    '&state=1234';
+window.location = url;
+</script>
+</body>
+</html>

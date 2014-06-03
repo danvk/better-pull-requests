@@ -32,14 +32,14 @@ PR_paths = ['number',
 
 # TODO(danvk): only use this in debug mode.
 API_CACHE = {}
-TOKEN = '59c0f1b073b84f91b43c6e3182a2bcc078afc90a'
 
-def _fetch_api(url):
+def _fetch_api(token, url):
     if url in API_CACHE:
         return API_CACHE[url]
     sys.stderr.write('Uncached request for %s\n' % url)
+    sys.stderr.write('Token=%s\n' % token)
 
-    r = requests.get(url, headers={'Authorization': 'token ' + TOKEN})
+    r = requests.get(url, headers={'Authorization': 'token ' + token})
     if not r.ok:
         sys.stderr.write('Request for %s failed.\n' % url)
         return False
@@ -49,9 +49,9 @@ def _fetch_api(url):
     return j
 
 
-def get_pull_requests(user, repo):
+def get_pull_requests(token, user, repo):
     url = 'https://api.github.com/repos/%s/%s/pulls' % (user, repo)
-    pull_requests = _fetch_api(url)
+    pull_requests = _fetch_api(token, url)
     if not pull_requests:
         return None
 
@@ -60,22 +60,20 @@ def get_pull_requests(user, repo):
     return [{x: extract_path(p, x) for x in paths} for p in pull_requests]
 
 
-def get_pull_request(user, repo, pull_number):
+def get_pull_request(token, user, repo, pull_number):
     url = 'https://api.github.com/repos/%s/%s/pulls/%s' % (user, repo, pull_number)
-    #pr = _fetch_api(url)
-    #if not pr:
-    #    return None
-    pr = json.load(file('/tmp/pull-296.json'))
+    pr = _fetch_api(token, url)
+    if not pr:
+        return None
 
     paths = PR_paths
     return {x: extract_path(pr, x) for x in paths}
 
 
-def get_pull_request_commits(user, repo, pull_number):
+def get_pull_request_commits(token, user, repo, pull_number):
     """Returns commits from first to last."""
     url = 'https://api.github.com/repos/%s/%s/pulls/%s/commits' % (user, repo, pull_number)
-    # commits = _fetch_api(url)
-    commits = json.load(file('/tmp/commits.json'))
+    commits = _fetch_api(token, url)
 
     if not commits:
         return None
@@ -92,17 +90,15 @@ def get_pull_request_commits(user, repo, pull_number):
     return commits
 
 
-def get_pull_request_comments(user, repo, pull_number):
+def get_pull_request_comments(token, user, repo, pull_number):
     # There are two types of comments:
     # 1. top level (these are issue comments)
     # 2. diff-level (these are pull requests comments)
     issue_url = 'https://api.github.com/repos/%s/%s/issues/%s/comments' % (user, repo, pull_number)
     pr_url = 'https://api.github.com/repos/%s/%s/pulls/%s/comments' % (user, repo, pull_number)
 
-    #issue_comments = _fetch_api(issue_url) or []
-    issue_comments = []
-    #pr_comments = _fetch_api(pr_url) or []
-    pr_comments = json.load(file('/tmp/comments.json'))
+    issue_comments = _fetch_api(token, issue_url) or []
+    pr_comments = _fetch_api(token, pr_url) or []
 
     issue_paths = {'id': 'id', 'user.login': 'user', 'updated_at': 'time', 'body': 'body'}
     pr_paths = {

@@ -1,16 +1,25 @@
 from collections import defaultdict
 import json
 import urllib
+import requests
+import sys
 
-from flask import Flask, url_for, render_template, request, jsonify
+from flask import Flask, url_for, render_template, request, jsonify, session
 import github
 import git
+
+SECRETS = json.load(open('secrets.json'))
+CLIENT_SECRET = SECRETS['github_client_secret']
+Flask.secret_key = SECRETS['flask_secret_key']
 
 app = Flask(__name__)
 
 @app.route("/repo/<user>/<repo>")
 def repo(user, repo):
-    pull_requests = github.get_pull_requests(user, repo)
+    token = session['token']
+    pull_requests = github.get_pull_requests(token, user, repo)
+    sys.stderr.write('Found %d pull requests in %s/%s\n' % (
+        len(pull_requests), user, repo))
 
     format_pull_requests = [{
         'url': url_for('pull', user=user, repo=repo, number=pr['number']),
@@ -24,9 +33,10 @@ def repo(user, repo):
 
 @app.route("/pull/<user>/<repo>/<number>")
 def pull(user, repo, number):
-    commits = github.get_pull_request_commits(user, repo, number)
-    pr = github.get_pull_request(user, repo, number)
-    comments = github.get_pull_request_comments(user, repo, number)
+    token = session['token']
+    commits = github.get_pull_request_commits(token, user, repo, number)
+    pr = github.get_pull_request(token, user, repo, number)
+    comments = github.get_pull_request_comments(token, user, repo, number)
 
     commit_to_comments = defaultdict(int)
     for comment in comments['diff_level']:
@@ -60,9 +70,10 @@ def file_diff(user, repo, number):
         return "Incomplete request (need path, sha1, sha2)"
 
     # TODO(danvk): consolidate this code with the pull route
-    commits = github.get_pull_request_commits(user, repo, number)
-    pr = github.get_pull_request(user, repo, number)
-    comments = github.get_pull_request_comments(user, repo, number)
+    token = session['token']
+    commits = github.get_pull_request_commits(token, user, repo, number)
+    pr = github.get_pull_request(token, user, repo, number)
+    comments = github.get_pull_request_comments(token, user, repo, number)
 
     commit_to_comments = defaultdict(int)
     for comment in comments['diff_level']:
@@ -120,9 +131,32 @@ def diff():
     return jsonify(files=differing_files, before=before, after=after)
 
 
+@app.route("/oauth_callback")
+def oauth_callback():
+    state = request.args.get('state', '')  # TODO(danvk): verify this
+    code = request.args.get('code', '')
+    if not code:
+        return "Unable to authenticate"
+
+    # Now we POST to github.com/login/oauth/access_token to get an access token.
+    response = requests.post('https://github.com/login/oauth/access_token', data={
+        'client_id': 'a9c607c208c3155a26dd',
+        'client_secret': CLIENT_SECRET,
+        'code': code,
+        'redirect_uri': 'http://localhost:5000/oauth_callback'
+        }, headers={'Accept': 'application/json'})
+
+    if response.json() and 'access_token' in response.json():
+        session['token'] = response.json()['access_token']
+    else:
+        return "Unable to authenticate."
+
+    return "Authenticated successfully!"
+
+
 @app.route("/")
 def hello():
-    return "Hello World!"
+    return render_template('index.html')
 
 if __name__ == "__main__":
     app.run(debug=True)
