@@ -19,14 +19,16 @@ td.before, td.after, td.skip {
   min-width: 555px;
 }
 
-.comment-body {
-  white-space: pre;
+.inline-comment {  /* same as body font */
+  font-family: Helvetica, arial, freesans, clean, sans-serif;
+  font-size: 14px;
 }
+
 .inline-comment {
   background: lightgray;
   border: 1px solid black;
   padding: 3px;
-  margin: 3px -0.3em;
+  margin: 3px -0.2em 3px -0.3em;
 }
 
 .diff-current {
