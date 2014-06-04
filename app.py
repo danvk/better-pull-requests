@@ -186,6 +186,7 @@ def post_comment():
 
     response = github.post_comment(token, owner, repo, pull_number, commit_id, path, diff_position, body)
 
+    # TODO(danvk): reply with the same filtered format as /comments
     return jsonify(response)
 
 

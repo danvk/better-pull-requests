@@ -84,16 +84,18 @@ function displayDiffs(before_ref, after_ref, baseTxt, afterTxt) {
           comment.path == {{path|tojson}};
   });
 
-  comments.map(function(comment) {
-    var pos =
-        parseDiffPosition(comment.diff_hunk, comment.position_in_diff_hunk);
-    if (comment.original_commit_id == before_ref) {
-      pos.onLeft = !pos.onLeft;
-    }
+  comments.map(attachComment);
+}
 
-    var lineEl = findDomElementForPosition(diffDiv, pos);
-    $(lineEl).append(renderComment(comment));
-  });
+function attachComment(comment) {
+  var pos =
+      parseDiffPosition(comment.diff_hunk, comment.position_in_diff_hunk);
+  if (comment.original_commit_id == before_ref) {
+    pos.onLeft = !pos.onLeft;
+  }
+
+  var lineEl = findDomElementForPosition(diffDiv, pos);
+  $(lineEl).append(renderComment(comment));
 }
 
 var head_repo = {{head_repo|tojson|safe}};
@@ -175,10 +177,13 @@ $(function() {
           line_number: lineNumber,
           body: body
         }
-      }).success(function(data) {
-        console.log('Success!', data);
+      }).success(function(comment) {
+        $comment.remove();
+        comments.push(comment);
+        attachComment(comment);
       }).error(function(err) {
-        console.log('Failure!', err);
+        console.error(err);
+        alert("Unable to post comment!\n\n" + JSON.stringify(err));
       });
   });
 });
