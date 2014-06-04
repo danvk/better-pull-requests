@@ -113,12 +113,13 @@ $(function() {
         e.target.tagName.toLowerCase() == 'textarea') {
       return;
     }
-    if (e.keyCode == 75) {  // k
+    if (e.keyCode == 74 || e.keyCode == 75) {  // j/k
+      var klass = (e.keyCode == 74 ? 'next' : 'prev');
       // Any better way to visit links?
-      window.location = $('a.prev').attr('href');
-    } else if (e.keyCode == 74) {  // j
-      // Any better way to visit links?
-      window.location = $('a.next').attr('href');
+      var url = $('a.' + klass).attr('href');
+      if (url) {
+        window.location = url;
+      }
     } else if (e.keyCode == 78) { // n
       // next comment
     } else if (e.keyCode == 80) { // p

@@ -2,10 +2,37 @@ import sys
 import logging
 import json
 
+import os
+import hashlib
+import cPickle
+
 import requests
 
 # TODO(danvk): inject a cache from the server module
-from werkzeug.contrib.cache import SimpleCache
+#from werkzeug.contrib.cache import SimpleCache
+#cache = SimpleCache()
+class SimpleCache(object):
+    def __init__(self):
+        self._cache_dir = '/tmp/better-git-pr/cache'
+        if not os.path.exists(self._cache_dir):
+            os.mkdir(self._cache_dir)
+
+    def _file_for_key(self, k):
+        return os.path.join(self._cache_dir, hashlib.md5(k).hexdigest())
+
+    def get(self, k):
+        f = self._file_for_key(k)
+        if os.path.exists(f):
+            try:
+                return cPickle.load(open(f))
+            except:
+                return None
+
+    def set(self, k, v):
+        f = self._file_for_key(k)
+        cPickle.dump(v, open(f, 'wb'))
+
+
 cache = SimpleCache()
 
 

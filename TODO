@@ -6,3 +6,4 @@ Cleanup tasks:
 
 User-facing:
 - Hide character-by-character diffs if they're too large? (mimc gerrit)
+- When there's no diff, show "no diff", rather than the entire file on both sides.

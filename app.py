@@ -110,9 +110,15 @@ def file_diff(user, repo, number):
 
     linked_files = [{'path':p, 'link': diff_url(p)} for p in differing_files]
 
-    file_idx = differing_files.index(path)
-    prev_file = linked_files[file_idx - 1] if file_idx > 0 else None
-    next_file = linked_files[file_idx + 1] if file_idx < len(linked_files) - 1 else None
+    if path in differing_files:
+        file_idx = differing_files.index(path)
+        prev_file = linked_files[file_idx - 1] if file_idx > 0 else None
+        next_file = linked_files[file_idx + 1] if file_idx < len(linked_files) - 1 else None
+    else:
+        # The current file is not part of this diff.
+        # Just do something sensible.
+        prev_file = None
+        next_file = linked_files[0] if len(linked_files) > 0 else None
 
     return render_template('file_diff.html', commits=format_commits, user=user, repo=repo, head_repo=pr['head.repo.full_name'], pull_request=pr, comments=comments, path=path, sha1=sha1, sha2=sha2, before_contents=before, after_contents=after, differing_files=linked_files, prev_file=prev_file, next_file=next_file)
 
