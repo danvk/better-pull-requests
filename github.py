@@ -63,7 +63,7 @@ PR_paths = ['number',
 
 def _fetch_api(token, url):
     cached = cache.get(url)
-    if cached:
+    if cached is not None:
         return cached
     sys.stderr.write('Uncached request for %s\n' % url)
     sys.stderr.write('Token=%s\n' % token)
@@ -76,6 +76,16 @@ def _fetch_api(token, url):
     j = r.json()
     cache.set(url, j)
     return j
+
+
+def _post_api(token, url, obj):
+    sys.stderr.write('Posting to %s\n' % url)
+    r = requests.post(url, headers={'Authorization': 'token ' + token, 'Content-type': 'application/json'}, data=json.dumps(obj))
+    if not r.ok:
+        sys.stderr.write('Request for %s failed.\n' % url)
+        return False
+
+    return r.json()
 
 
 def get_pull_requests(token, user, repo):
@@ -143,3 +153,14 @@ def get_pull_request_comments(token, user, repo, pull_number):
         'top_level': issue_comments,
         'diff_level': [{n: extract_path(comment, p) for p, n in pr_paths.iteritems()} for comment in pr_comments]
             }
+
+
+def post_comment(token, user, repo, pull_number, commit_id, path, position, body):
+    post_url = 'https://api.github.com/repos/%s/%s/pulls/%s/comments' % (user, repo, pull_number)
+
+    return _post_api(token, post_url, {
+        'commit_id': commit_id,
+        'path': path,
+        'position': position,
+        'body': body
+        })

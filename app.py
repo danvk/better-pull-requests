@@ -75,7 +75,6 @@ def file_diff(user, repo, number):
     commits = github.get_pull_request_commits(token, user, repo, number)
     pr = github.get_pull_request(token, user, repo, number)
     comments = github.get_pull_request_comments(token, user, repo, number)
-    github_comments.add_line_numbers_to_comments(pr, comments['diff_level'])
 
     commit_to_comments = defaultdict(int)
     for comment in comments['diff_level']:
@@ -99,6 +98,13 @@ def file_diff(user, repo, number):
 
     head_repo = pr['head.repo.full_name']
     clone_url = 'https://github.com/%s.git' % head_repo
+
+    # github excludes the first four header lines of "git diff"
+    github_diff = '\n'.join(git.get_file_diff(clone_url, path, sha1, sha2).split('\n')[4:])
+
+    # TODO(danvk): only annotate comments on this file.
+    github_comments.add_line_numbers_to_comments(pr, comments['diff_level'])
+
     differing_files = git.get_differing_files(clone_url, sha1, sha2)
     before = git.get_file_at_ref(clone_url, path, sha1)
     after = git.get_file_at_ref(clone_url, path, sha2)
@@ -120,7 +126,7 @@ def file_diff(user, repo, number):
         prev_file = None
         next_file = linked_files[0] if len(linked_files) > 0 else None
 
-    return render_template('file_diff.html', commits=format_commits, user=user, repo=repo, head_repo=pr['head.repo.full_name'], pull_request=pr, comments=comments, path=path, sha1=sha1, sha2=sha2, before_contents=before, after_contents=after, differing_files=linked_files, prev_file=prev_file, next_file=next_file)
+    return render_template('file_diff.html', commits=format_commits, user=user, repo=repo, head_repo=pr['head.repo.full_name'], pull_request=pr, comments=comments, path=path, sha1=sha1, sha2=sha2, before_contents=before, after_contents=after, differing_files=linked_files, prev_file=prev_file, next_file=next_file, github_diff=github_diff)
 
 
 # TODO(danvk): eliminate this request -- should all be done server-side
@@ -138,6 +144,50 @@ def diff():
     after = {p: git.get_file_at_ref(clone_url, p, sha2) for p in differing_files}
 
     return jsonify(files=differing_files, before=before, after=after)
+
+
+@app.route("/post_comment", methods=['POST'])
+def post_comment():
+    owner = request.form['owner']
+    repo = request.form['repo']
+    pull_number = request.form['pull_number']
+    path = request.form['path']
+    commit_id = request.form['commit_id']
+    line_number = int(request.form['line_number'])
+    body = request.form['body']
+
+    if not owner:
+        return "Incomplete post_comment request, missing owner"
+    if not repo:
+        return "Incomplete post_comment request, missing repo"
+    if not pull_number:
+        return "Incomplete post_comment request, missing pull_number"
+    if not path:
+        return "Incomplete post_comment request, missing path"
+    if not commit_id:
+        return "Incomplete post_comment request, missing commit_id"
+    if not line_number:
+        return "Incomplete post_comment request, missing line_number"
+    if not body:
+        return "Incomplete post_comment request, missing body"
+
+    token = session['token']
+    if not token:
+        return "You must be oauthed to post a comment."
+
+    pr = github.get_pull_request(token, owner, repo, pull_number)
+    base_sha = pr['base.sha']
+
+    diff_position = github_comments.lineNumberToDiffPosition(pr, path, commit_id, line_number, False)  # False = on_left (for now!)
+    if not diff_position:
+        return "Unable to get diff position for %s:%s @%s" % (path, line_number, commit_id)
+
+    sys.stderr.write('diff_position=%s\n' % diff_position)
+
+    response = github.post_comment(token, owner, repo, pull_number, commit_id, path, diff_position, body)
+
+    return jsonify(response)
+
 
 
 @app.route("/oauth_callback")
