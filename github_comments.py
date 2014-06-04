@@ -21,12 +21,12 @@ def _get_github_diff_lines(clone_url, path, sha1, sha2):
 
 
 def add_line_number_to_comment(pr, comment):
-    base_sha = pr['base.sha']
+    base_sha = pr['base']['sha']
     path = comment['path']
     comment_sha = comment['original_commit_id']
     position = comment['original_position']
 
-    head_repo = pr['head.repo.full_name']
+    head_repo = pr['head']['repo']['full_name']
     clone_url = 'https://github.com/%s.git' % head_repo
 
     diff_lines = _get_github_diff_lines(clone_url, path, base_sha, comment_sha)
@@ -46,9 +46,9 @@ def add_line_numbers_to_comments(pr, comments):
 
 
 def lineNumberToDiffPosition(pr, path, commit_id, line_number, on_left):
-    base_sha = pr['base.sha']
+    base_sha = pr['base']['sha']
 
-    head_repo = pr['head.repo.full_name']
+    head_repo = pr['head']['repo']['full_name']
     clone_url = 'https://github.com/%s.git' % head_repo
 
     diff_lines = _get_github_diff_lines(clone_url, path, base_sha, commit_id)

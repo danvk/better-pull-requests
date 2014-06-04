@@ -10,10 +10,11 @@
 {% for commit in commits %}
 <input name='sha1' type=radio value={{commit.sha}} {%if commit.sha == sha1%}checked{%endif%}>
 <input name='sha2' type=radio value={{commit.sha}} {%if commit.sha == sha2%}checked{%endif%}>
-{{commit.time}}
+{{commit.author.date}}
 {{commit.sha}}
 {{commit.message}}
-{{commit.author}} <span sha={{commit.sha}} class="comment-count"></span>
+{{commit.author.login}}
+<span sha={{commit.sha}} class="comment-count"></span>
 <br>
 {% endfor %}
 <input type=hidden name=path value="{{path}}">
@@ -64,6 +65,9 @@
 var beforeContents = {{before_contents|tojson|safe}};
 var afterContents = {{after_contents|tojson|safe}};
 
+var sha1 = {{sha1|tojson|safe}};
+var sha2 = {{sha2|tojson|safe}};
+
 function displayDiffs(before_ref, after_ref, baseTxt, afterTxt) {
   var diffDiv = renderDiff(baseTxt, afterTxt);
 
@@ -84,10 +88,11 @@ function displayDiffs(before_ref, after_ref, baseTxt, afterTxt) {
           comment.path == {{path|tojson}};
   });
 
-  comments.map(attachComment);
+  comments.map(
+      function(x) { return attachComment(before_ref, after_ref, diffDiv, x) });
 }
 
-function attachComment(comment) {
+function attachComment(before_ref, after_ref, diffDiv, comment) {
   var pos =
       parseDiffPosition(comment.diff_hunk, comment.position_in_diff_hunk);
   if (comment.original_commit_id == before_ref) {
@@ -118,7 +123,7 @@ $(function() {
   // Simplify comment view
   $('.comment-body').map(function(_, div) { collapseQuotes(div) });
 
-  displayDiffs({{sha1|tojson|safe}}, {{sha2|tojson|safe}}, beforeContents, afterContents);
+  displayDiffs(sha1, sha2, beforeContents, afterContents);
 
   $(document).on('keydown', function(e) {
     if (e.ctrlKey || e.altKey || e.metaKey ||
@@ -179,8 +184,8 @@ $(function() {
         }
       }).success(function(comment) {
         $comment.remove();
-        comments.push(comment);
-        attachComment(comment);
+        diff_comments.push(comment);
+        attachComment(sha1, sha2, $('#thediff').get(0), comment);
       }).error(function(err) {
         console.error(err);
         alert("Unable to post comment!\n\n" + JSON.stringify(err));

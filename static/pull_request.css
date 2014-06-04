@@ -22,6 +22,7 @@ td.before, td.after, td.skip {
 .inline-comment {  /* same as body font */
   font-family: Helvetica, arial, freesans, clean, sans-serif;
   font-size: 14px;
+  white-space: normal;
 }
 
 .inline-comment {

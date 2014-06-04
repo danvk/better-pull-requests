@@ -1,5 +1,5 @@
 Cleanup tasks:
-- Don't filter the returned dicts in github.py
+x Don't filter the returned dicts in github.py
 - Try to get rid of git.py -- it will make it easier to host this as a service.
   - get_differing_files(repo, sha1, sha2)
   - get_file_at_ref(repo, path, ref)

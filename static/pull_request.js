@@ -178,7 +178,7 @@ function findDomElementForPosition(diffEl, parsedPosition) {
  */
 function renderComment(comment) {
   var $div = $('<div class="inline-comment">');
-  var $meta = $('<div>').text(comment.user + ' added a note on ' + comment.time);
+  var $meta = $('<div>').text(comment.user.login + ' added a note on ' + comment.updated_at);
   var $comment = $('<div class="inline-comment-body">')
     .html(new Showdown.converter().makeHtml(comment.body));
   return $div.append([$meta, $comment]).get(0);

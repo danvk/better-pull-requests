@@ -22,11 +22,12 @@ def repo(user, repo):
     sys.stderr.write('Found %d pull requests in %s/%s\n' % (
         len(pull_requests), user, repo))
 
+    # TODO(danvk): augment pull_requests rather than doing this.
     format_pull_requests = [{
         'url': url_for('pull', user=user, repo=repo, number=pr['number']),
         'number': pr['number'],
         'title': pr['title'],
-        'user': pr['user.login']
+        'user': pr['user']['login']
         } for pr in pull_requests]
 
     return render_template('repo.html', pull_requests=format_pull_requests)
@@ -44,22 +45,20 @@ def pull(user, repo, number):
         commit_to_comments[comment['original_commit_id']] += 1
 
     commits.reverse()
+    # Add an entry for the base commit.
     commits.append({
-        'sha': pr['base.sha'],
-        'commit.message': '(%s)' % pr['base.ref'],
-        'commit.author.date': '',
-        'author.login': ''
+        'sha': pr['base']['sha'],
+        'commit': {
+            'message': '(%s)' % pr['base']['ref'],
+            'author': {'date': ''}
+        },
+        'author': {'login': ''}
     })
 
-    format_commits = [{
-        'sha': commit['sha'],
-        'message': commit['commit.message'],
-        'author': commit['author.login'],
-        'time': commit['commit.author.date'],
-        'comment_count': commit_to_comments[commit['sha']]
-        } for commit in commits]
+    for commit in commits:
+        commit['comment_count'] = commit_to_comments[commit['sha']]
 
-    return render_template('pull_request.html', commits=format_commits, user=user, repo=repo, head_repo=pr['head.repo.full_name'], pull_request=pr, comments=comments)
+    return render_template('pull_request.html', commits=commits, user=user, repo=repo, head_repo=pr['head']['repo']['full_name'], pull_request=pr, comments=comments)
 
 
 @app.route("/pull/<user>/<repo>/<number>/diff")
@@ -81,22 +80,18 @@ def file_diff(user, repo, number):
         commit_to_comments[comment['original_commit_id']] += 1
 
     commits.reverse()
+    # Add an entry for the base commit.
     commits.append({
-        'sha': pr['base.sha'],
-        'commit.message': '(%s)' % pr['base.ref'],
-        'commit.author.date': '',
-        'author.login': ''
+        'sha': pr['base']['sha'],
+        'commit': {
+            'message': '(%s)' % pr['base']['ref'],
+            'author': {'date': ''}
+        },
+        'author': {'login': ''}
     })
 
-    format_commits = [{
-        'sha': commit['sha'],
-        'message': commit['commit.message'],
-        'author': commit['author.login'],
-        'time': commit['commit.author.date'],
-        'comment_count': commit_to_comments[commit['sha']]
-        } for commit in commits]
 
-    head_repo = pr['head.repo.full_name']
+    head_repo = pr['head']['repo']['full_name']
     clone_url = 'https://github.com/%s.git' % head_repo
 
     # github excludes the first four header lines of "git diff"
@@ -126,7 +121,7 @@ def file_diff(user, repo, number):
         prev_file = None
         next_file = linked_files[0] if len(linked_files) > 0 else None
 
-    return render_template('file_diff.html', commits=format_commits, user=user, repo=repo, head_repo=pr['head.repo.full_name'], pull_request=pr, comments=comments, path=path, sha1=sha1, sha2=sha2, before_contents=before, after_contents=after, differing_files=linked_files, prev_file=prev_file, next_file=next_file, github_diff=github_diff)
+    return render_template('file_diff.html', commits=commits, user=user, repo=repo, head_repo=head_repo, pull_request=pr, comments=comments, path=path, sha1=sha1, sha2=sha2, before_contents=before, after_contents=after, differing_files=linked_files, prev_file=prev_file, next_file=next_file, github_diff=github_diff)
 
 
 # TODO(danvk): eliminate this request -- should all be done server-side
@@ -176,7 +171,7 @@ def post_comment():
         return "You must be oauthed to post a comment."
 
     pr = github.get_pull_request(token, owner, repo, pull_number)
-    base_sha = pr['base.sha']
+    base_sha = pr['base']['sha']
 
     diff_position = github_comments.lineNumberToDiffPosition(pr, path, commit_id, line_number, False)  # False = on_left (for now!)
     if not diff_position:
@@ -185,8 +180,9 @@ def post_comment():
     sys.stderr.write('diff_position=%s\n' % diff_position)
 
     response = github.post_comment(token, owner, repo, pull_number, commit_id, path, diff_position, body)
+    if response:
+        github_comments.add_line_number_to_comment(pr, response)
 
-    # TODO(danvk): reply with the same filtered format as /comments
     return jsonify(response)
 
 

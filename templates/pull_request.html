@@ -12,10 +12,11 @@
 {% for commit in commits %}
 <input name='left' type=radio sha={{commit.sha}}>
 <input name='right' type=radio sha={{commit.sha}}>
-{{commit.time}}
+{{commit.author.date}}
 {{commit.sha}}
 {{commit.message}}
-{{commit.author}} ({{commit.comment_count}} comments)
+{{commit.author.login}}
+{%if commit.comment_count > 0 %}({{commit.comment_count}} comments){%endif%}
 <br>
 {% endfor %}
 
@@ -26,7 +27,7 @@
 
 <h2>Discussion</h2>
 {% for comment in comments.top_level %}
-<p>{{comment.updated_at}} {{ comment.user.login }}:<br>
+<p>{{comment.updated_at}} {{comment.user.login}}:<br>
 <div class="comment-body">{{comment.body}}</div></p>
 <hr/>
 {% endfor %}
