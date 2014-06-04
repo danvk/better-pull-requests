@@ -49,6 +49,8 @@
 {% endfor %}
 </div>
 
+<div id="comment-template" class="inline-comment" style="display:none;"><textarea rows=4></textarea></div>
+
 <script src="/static/jquery-2.1.1.min.js"></script>
 <script src="/static/underscore-min.js"></script>
 <script src="/static/jsdifflib/difflib.js"></script>
@@ -81,7 +83,7 @@ function displayDiffs(before_ref, after_ref, baseTxt, afterTxt) {
 
   comments.map(function(comment) {
     var pos =
-        parseDiffPosition(comment.diff_hunk, comment.original_position);
+        parseDiffPosition(comment.diff_hunk, comment.position_in_diff_hunk);
     if (comment.original_commit_id == before_ref) {
       pos.onLeft = !pos.onLeft;
     }
@@ -94,6 +96,11 @@ function displayDiffs(before_ref, after_ref, baseTxt, afterTxt) {
 var head_repo = {{head_repo|tojson|safe}};
 var diff_comments = {{comments.diff_level|tojson|safe}};
 
+function createCommentBox(onLeft, lineNumber) {
+  var $td = $('td.' + (onLeft ? 'before' : 'after') + '.line-' + lineNumber);
+  $td.append($('#comment-template').clone().removeAttr('id').show());
+}
+
 $(function() {
   // Simplify comment view
   $('.comment-body').map(function(_, div) { collapseQuotes(div) });
@@ -101,7 +108,11 @@ $(function() {
   displayDiffs({{sha1|tojson|safe}}, {{sha2|tojson|safe}}, beforeContents, afterContents);
 
   $(document).on('keydown', function(e) {
-    if (e.ctrlKey || e.altKey || e.metaKey) return;
+    if (e.ctrlKey || e.altKey || e.metaKey ||
+        e.target.tagName.toLowerCase() == 'input' ||
+        e.target.tagName.toLowerCase() == 'textarea') {
+      return;
+    }
     if (e.keyCode == 75) {  // k
       // Any better way to visit links?
       window.location = $('a.prev').attr('href');
@@ -114,6 +125,22 @@ $(function() {
       // previous comment
     }
     // console.log(e.keyCode);
+  });
+
+  $('.diff td').on('dblclick', function(e) {
+      if ($(e.target).is('.inline-comment')) return;
+      var onLeft = $(e.target).is('.before');
+      var lineClasses = this.classList;
+      var lineNumber;
+      for (var i = 0; i < lineClasses.length; i++) {
+        var m = /line-([0-9]+)/.exec(lineClasses[i]);
+        if (m) {
+          lineNumber = m[1];
+          break;
+        }
+      }
+      if (lineNumber === undefined) return;
+      createCommentBox(onLeft, lineNumber);
   });
 });
 </script>

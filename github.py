@@ -4,6 +4,10 @@ import json
 
 import requests
 
+# TODO(danvk): inject a cache from the server module
+from werkzeug.contrib.cache import SimpleCache
+cache = SimpleCache()
+
 
 def extract_path(json_data, path):
     parts = path.split('.')
@@ -30,12 +34,10 @@ PR_paths = ['number',
              'base.sha'
             ]
 
-# TODO(danvk): only use this in debug mode.
-API_CACHE = {}
-
 def _fetch_api(token, url):
-    if url in API_CACHE:
-        return API_CACHE[url]
+    cached = cache.get(url)
+    if cached:
+        return cached
     sys.stderr.write('Uncached request for %s\n' % url)
     sys.stderr.write('Token=%s\n' % token)
 
@@ -45,7 +47,7 @@ def _fetch_api(token, url):
         return False
 
     j = r.json()
-    API_CACHE[url] = j
+    cache.set(url, j)
     return j
 
 

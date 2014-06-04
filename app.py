@@ -7,6 +7,7 @@ import sys
 from flask import Flask, url_for, render_template, request, jsonify, session
 import github
 import git
+import github_comments
 
 SECRETS = json.load(open('secrets.json'))
 CLIENT_SECRET = SECRETS['github_client_secret']
@@ -74,6 +75,7 @@ def file_diff(user, repo, number):
     commits = github.get_pull_request_commits(token, user, repo, number)
     pr = github.get_pull_request(token, user, repo, number)
     comments = github.get_pull_request_comments(token, user, repo, number)
+    github_comments.add_line_numbers_to_comments(pr, comments['diff_level'])
 
     commit_to_comments = defaultdict(int)
     for comment in comments['diff_level']:
@@ -115,6 +117,7 @@ def file_diff(user, repo, number):
     return render_template('file_diff.html', commits=format_commits, user=user, repo=repo, head_repo=pr['head.repo.full_name'], pull_request=pr, comments=comments, path=path, sha1=sha1, sha2=sha2, before_contents=before, after_contents=after, differing_files=linked_files, prev_file=prev_file, next_file=next_file)
 
 
+# TODO(danvk): eliminate this request -- should all be done server-side
 @app.route("/diff", methods=["GET", "POST"])
 def diff():
     repo = request.args.get('repo', '')

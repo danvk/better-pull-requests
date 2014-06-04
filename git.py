@@ -118,3 +118,22 @@ def get_file_at_ref(clone_url, path, ref):
     if pr.returncode != 0:
         return None
     return stdout
+
+
+def get_file_diff(clone_url, path, sha1, sha2):
+    if not (_clone_if_no_sha(clone_url, sha1) and _clone_if_no_sha(clone_url, sha2)):
+        return False
+
+    d = CLONE_URL_TO_DIR[clone_url]
+
+    pr = subprocess.Popen(['/usr/bin/git', 'diff', sha1 + '..' + sha2, path],
+           cwd=d,
+           stdout=subprocess.PIPE, 
+           stderr=subprocess.PIPE, 
+           shell=False)
+    (stdout, stderr) = pr.communicate()
+    sys.stderr.write(stderr)
+    if pr.returncode != 0:
+        return None
+
+    return stdout

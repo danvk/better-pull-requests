@@ -1,0 +1,8 @@
+Cleanup tasks:
+- Don't filter the returned dicts in github.py
+- Try to get rid of git.py -- it will make it easier to host this as a service.
+- Move more processing out of JS and into Python
+- Use Mocha for JS testing
+
+User-facing:
+- Hide character-by-character diffs if they're too large? (mimc gerrit)
