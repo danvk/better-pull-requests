@@ -50,8 +50,14 @@
 {% endfor %}
 </div>
 
-<div id="comment-template" class="inline-comment inline-editable-comment" style="display:none;"><textarea rows=4></textarea>
+<div id="editable-comment-template" class="inline-comment inline-editable-comment" style="display:none;"><textarea rows=4></textarea>
 <button class="submit-comment">Submit</button></div>
+
+<div id="comment-template" class="inline-comment" style="display:none;">
+  <div class="metadata"><span class="user"></span> added a note on <span class="updated_at"></span></div>
+  <a class="github-link" href="">view on github</a>
+  <div class="inline-comment-body"></div>
+</div>
 
 <script src="/static/jquery-2.1.1.min.js"></script>
 <script src="/static/underscore-min.js"></script>
@@ -107,7 +113,7 @@ var head_repo = {{head_repo|tojson|safe}};
 var diff_comments = {{comments.diff_level|tojson|safe}};
 
 function createCommentBox(onLeft, lineNumber) {
-  var $box = $('#comment-template')
+  var $box = $('#editable-comment-template')
       .clone()
       .removeAttr('id')
       .data({

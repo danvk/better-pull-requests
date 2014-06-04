@@ -177,10 +177,13 @@ function findDomElementForPosition(diffEl, parsedPosition) {
  * @return {!HTMLDivElement} The rendered comment.
  */
 function renderComment(comment) {
-  var $div = $('<div class="inline-comment">');
-  var $meta = $('<div>').text(comment.user.login + ' added a note on ' + comment.updated_at);
-  var $comment = $('<div class="inline-comment-body">')
-    .html(new Showdown.converter().makeHtml(comment.body));
-  return $div.append([$meta, $comment]).get(0);
+  var $div = $('#comment-template').clone().removeAttr('id').show();
+
+  $div.find('.user').text(comment.user.login);
+  $div.find('.updated_at').text(comment.updated_at);
+  $div.find('.github-link').attr('href', comment.html_url);
+  $div.find('.inline-comment-body').html(
+      new Showdown.converter().makeHtml(comment.body));
+  return $div.get(0);
 }
 
