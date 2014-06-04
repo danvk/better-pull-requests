@@ -32,6 +32,14 @@ td.before, td.after, td.skip {
   margin: 3px -0.2em 3px -0.3em;
 }
 
+.inline-editable-comment {
+  padding-right: 9px;
+}
+
+.inline-editable-comment textarea {
+  width: 100%;
+}
+
 .diff-current {
   font-weight: bold;
 }

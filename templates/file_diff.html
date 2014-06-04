@@ -51,7 +51,8 @@
 </div>
 
 <div id="editable-comment-template" class="inline-comment inline-editable-comment" style="display:none;"><textarea rows=4></textarea>
-<button class="submit-comment">Submit</button></div>
+<button class="submit-comment">Submit</button>
+<button class="discard-comment">Discard</button></div>
 
 <div id="comment-template" class="inline-comment" style="display:none;">
   <div class="metadata"><span class="user"></span> added a note on <span class="updated_at"></span></div>
@@ -153,7 +154,7 @@ $(function() {
   });
 
   $('.diff td').on('dblclick', function(e) {
-      if ($(e.target).is('.inline-comment')) return;
+      if ($(e.target).closest('.inline-comment').length > 0) return;
       var onLeft = $(e.target).is('.before');
       var lineClasses = this.classList;
       var lineNumber;
@@ -167,6 +168,7 @@ $(function() {
       if (lineNumber === undefined) return;
       createCommentBox(onLeft, lineNumber);
       e.preventDefault();
+      return false;
   });
 
   $(document).on('click', '.submit-comment', function(e) {
@@ -196,6 +198,10 @@ $(function() {
         console.error(err);
         alert("Unable to post comment!\n\n" + JSON.stringify(err));
       });
+  }).on('click', '.discard-comment', function(e) {
+      // TODO(danvk): save draft comment at this location.
+      var $comment = $(this).parent('.inline-editable-comment');
+      $comment.remove();
   });
 });
 </script>
