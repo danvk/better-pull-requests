@@ -120,8 +120,10 @@ def file_diff(user, repo, number):
         # Just do something sensible.
         prev_file = None
         next_file = linked_files[0] if len(linked_files) > 0 else None
+    
+    pull_request_url = url_for('pull', user=user, repo=repo, number=number)
 
-    return render_template('file_diff.html', commits=commits, user=user, repo=repo, head_repo=head_repo, pull_request=pr, comments=comments, path=path, sha1=sha1, sha2=sha2, before_contents=before, after_contents=after, differing_files=linked_files, prev_file=prev_file, next_file=next_file, github_diff=github_diff)
+    return render_template('file_diff.html', commits=commits, user=user, repo=repo, head_repo=head_repo, pull_request=pr, comments=comments, path=path, sha1=sha1, sha2=sha2, before_contents=before, after_contents=after, differing_files=linked_files, prev_file=prev_file, next_file=next_file, github_diff=github_diff, pull_request_url=pull_request_url)
 
 
 # TODO(danvk): eliminate this request -- should all be done server-side

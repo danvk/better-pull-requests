@@ -9,9 +9,9 @@ x Don't filter the returned dicts in github.py
 - Move all the JS of pull_request.html into a JS file
 
 User-facing:
+x Add 'u' shortcut and link back to pull request view.
 - Hide character-by-character diffs if they're too large? (mimc gerrit)
 - When there's no diff, show "no diff", rather than the entire file on both sides.
-- Add 'u' shortcut and link back to pull request view.
 - Redirect to OAuth flow whenever it's required, and redirect back to the right place.
 - Return real error codes from XHR methods
 - Render the Pull Request description with Markdown.

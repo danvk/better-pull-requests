@@ -5,6 +5,9 @@
   <link rel=stylesheet href="/static/pull_request.css">
 </head>
 <body>
+<h2><a href="{{pull_request_url}}">{{pull_request.title}}</a></h2>
+<p class="description">{{pull_request.body}}</p>
+
 <h2>Commits</h2>
 <form action='#'>
 {% for commit in commits %}
@@ -149,6 +152,8 @@ $(function() {
       // next comment
     } else if (e.keyCode == 80) { // p
       // previous comment
+    } else if (e.keyCode == 85) { // u
+      window.location = {{pull_request_url|tojson|safe}};
     }
     // console.log(e.keyCode);
   });
