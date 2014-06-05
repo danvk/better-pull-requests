@@ -184,6 +184,9 @@ function renderComment(comment) {
   $div.find('.github-link').attr('href', comment.html_url);
   $div.find('.inline-comment-body').html(
       new Showdown.converter().makeHtml(comment.body));
+  if (comment.is_draft) {
+    $div.addClass('draft');
+  }
   return $div.get(0);
 }
 

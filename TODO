@@ -9,11 +9,11 @@ x Try to get rid of git.py -- it will make it easier to host this as a service.
 
 User-facing:
 x Add 'u' shortcut and link back to pull request view.
-- Hide character-by-character diffs if they're too large? (mimc gerrit)
+x Render the Pull Request description with Markdown.
+- Hide character-by-character diffs if they're too large? (mimic gerrit)
 - When there's no diff, show "no diff", rather than the entire file on both sides.
 - Redirect to OAuth flow whenever it's required, and redirect back to the right place.
 - Return real error codes from XHR methods
-- Render the Pull Request description with Markdown.
 - Add support for "reply_to"-style comments.
 - Classify comments as addressed/not addressed
 - Add links to show more context
@@ -21,3 +21,8 @@ x Add 'u' shortcut and link back to pull request view.
 - Add syntax highlighting
 - Show diffstats on pull request view
 - Support commenting on the left side of the diff (thread through /post_comment)
+- Only show first line of commit message in commit list.
+- When you create a comment, the text field should auto-focus.
+- Copy github markdown CSS
+- Auto-link "Pull Request...", "Issue...", etc.
+- Batch comments

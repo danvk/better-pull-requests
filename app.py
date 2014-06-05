@@ -104,8 +104,8 @@ def file_diff(user, repo, number):
     github_comments.add_line_numbers_to_comments(token, user, repo, pr['base']['sha'], comments['diff_level'])
 
     differing_files = [f['filename'] for f in diff_info['files']]
-    before = github.get_file_at_ref(token, user, repo, path, sha1)
-    after = github.get_file_at_ref(token, user, repo, path, sha2)
+    before = github.get_file_at_ref(token, user, repo, path, sha1) or ''
+    after = github.get_file_at_ref(token, user, repo, path, sha2) or ''
 
     def diff_url(path):
         return (url_for('file_diff', user=user, repo=repo, number=number) +

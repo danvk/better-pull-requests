@@ -3,6 +3,10 @@ body {
   font-family: Helvetica, arial, freesans, clean, sans-serif;
 }
 
+.description {
+  max-width: 800px;
+}
+
 .diff {
   font-size: 12px;
 }

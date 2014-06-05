@@ -54,7 +54,7 @@
 </div>
 
 <div id="editable-comment-template" class="inline-comment inline-editable-comment" style="display:none;"><textarea rows=4></textarea>
-<button class="submit-comment">Submit</button>
+<button class="save-comment">Save</button>
 <button class="discard-comment">Discard</button></div>
 
 <div id="comment-template" class="inline-comment" style="display:none;">
@@ -103,7 +103,7 @@ function displayDiffs(before_ref, after_ref, baseTxt, afterTxt) {
 }
 
 function attachComment(before_ref, after_ref, diffDiv, comment) {
-  var pos =
+  var pos = comment.parsed_position ||
       parseDiffPosition(comment.diff_hunk, comment.position_in_diff_hunk);
   if (comment.original_commit_id == before_ref) {
     pos.onLeft = !pos.onLeft;
@@ -175,7 +175,7 @@ $(function() {
       return false;
   });
 
-  $(document).on('click', '.submit-comment', function(e) {
+  $(document).on('click', '.save-comment', function(e) {
       var $comment = $(this).parent('.inline-editable-comment');
       var lineNumber = $comment.data('lineNumber');
       var commitId = $comment.data('onLeft') ? {{sha1|tojson|safe}} : {{sha2|tojson|safe}};

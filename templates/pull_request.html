@@ -36,6 +36,8 @@
 <script src="/static/underscore-min.js"></script>
 <script src="/static/jsdifflib/difflib.js"></script>
 <script src="/static/jsdifflib/diffview.js"></script>
+<script src="/static/showdown/showdown.js"></script>
+<script src="/static/showdown/github.js"></script>
 <script src="/static/pull_request.js"></script>
 
 <script type="text/javascript">
@@ -79,6 +81,9 @@ $(function() {
 
   // Simplify comment view
   $('.comment-body').map(function(_, div) { collapseQuotes(div) });
+
+  // Format descriptions with markdown.
+  $('.description').html(new Showdown.converter().makeHtml({{pull_request.body|tojson|safe}}));
 });
 </script>
 
