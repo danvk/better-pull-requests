@@ -1,3 +1,20 @@
+"""This should be eliminated entirely!
+
+get_differing_files:
+    GET /repos/:owner/:repo/compare/sha1...sha2
+    Differing files are in files.filename.
+    This also includes diffstats.
+
+get_file_at_ref(path, ref):
+    GET /repos/:owner/:repo/contents/path&ref=...
+    -H "Accept: application/vnd.github.3.raw"
+
+get_file_diff(path, sha1, sha2):
+    GET /repos/:owner/:repo/compare/sha1...sha2
+    -H "Accept: application/vnd.github.3.diff"
+    Then split the output into per-file diffs.
+
+"""
 import tempfile
 import subprocess
 import os

@@ -7,6 +7,7 @@ x Don't filter the returned dicts in github.py
 - Move more processing out of JS and into Python
 - Use Mocha for JS testing
 - Move all the JS of pull_request.html into a JS file
+- Change "user" to "owner" in github.py and in templates
 
 User-facing:
 x Add 'u' shortcut and link back to pull request view.
@@ -20,3 +21,4 @@ x Add 'u' shortcut and link back to pull request view.
 - Add links to show more context
 - Make text copy/pastable
 - Add syntax highlighting
+- Show diffstats on pull request view
