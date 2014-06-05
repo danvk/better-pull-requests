@@ -157,6 +157,11 @@ def get_file_diff(token, user, repo, path, sha1, sha2):
     return unified_diff[start:limit]
 
 
+def get_file_at_ref(token, user, repo, path, sha):
+    url = (GITHUB_API_ROOT + '/repos/%(user)s/%(repo)s/contents/%(path)s?ref=%(sha)s') % {'user': user, 'repo': repo, 'path': path, 'sha': sha}
+    return _fetch_url(token, url, extra_headers={'Accept': 'application/vnd.github.3.raw'})
+
+
 def post_comment(token, user, repo, pull_number, commit_id, path, position, body):
     post_path = '/repos/%(user)s/%(repo)s/pulls/%(pull_number)s/comments'
 
