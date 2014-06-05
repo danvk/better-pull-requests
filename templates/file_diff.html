@@ -113,7 +113,6 @@ function attachComment(before_ref, after_ref, diffDiv, comment) {
   $(lineEl).append(renderComment(comment));
 }
 
-var head_repo = {{head_repo|tojson|safe}};
 var diff_comments = {{comments.diff_level|tojson|safe}};
 
 function createCommentBox(onLeft, lineNumber) {

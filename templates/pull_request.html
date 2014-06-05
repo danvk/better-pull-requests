@@ -57,15 +57,13 @@ function displayDiffs(before_ref, after_ref, data) {
   $('#files-changed a').wrap('<div class=diff-link></div>');
 }
 
-var head_repo = {{head_repo|tojson|safe}};
-
 $(function() {
   $('#diff').click(function() {
     $('#files-changed').html('&hellip;');
 
     var sha1 = $('input[name="left"]:checked').attr('sha'),
         sha2 = $('input[name="right"]:checked').attr('sha');
-        $.getJSON('/diff', { repo: head_repo, sha1: sha1, sha2: sha2 })
+        $.getJSON('/diff', { user: user, repo: repo, sha1: sha1, sha2: sha2 })
         .success(function(data) {
           displayDiffs(sha1, sha2, data);
         })

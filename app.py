@@ -6,7 +6,6 @@ import sys
 
 from flask import Flask, url_for, render_template, request, jsonify, session
 import github
-import git
 import github_comments
 
 SECRETS = json.load(open('secrets.json'))
@@ -58,7 +57,7 @@ def pull(user, repo, number):
     for commit in commits:
         commit['comment_count'] = commit_to_comments[commit['sha']]
 
-    return render_template('pull_request.html', commits=commits, user=user, repo=repo, head_repo=pr['head']['repo']['full_name'], pull_request=pr, comments=comments)
+    return render_template('pull_request.html', commits=commits, user=user, repo=repo, pull_request=pr, comments=comments)
 
 
 @app.route("/pull/<user>/<repo>/<number>/diff")
@@ -91,18 +90,20 @@ def file_diff(user, repo, number):
     })
 
 
-    head_repo = pr['head']['repo']['full_name']
-    clone_url = 'https://github.com/%s.git' % head_repo
-
     # github excludes the first four header lines of "git diff"
-    github_diff = '\n'.join(git.get_file_diff(clone_url, path, sha1, sha2).split('\n')[4:])
+    diff_info = github.get_diff_info(token, user, repo, sha1, sha2)
+    unified_diff = github.get_file_diff(token, user, repo, path, sha1, sha2)
+    if not unified_diff or not diff_info:
+        return "Unable to get diff for %s..%s" % (sha1, sha2)
+
+    github_diff = '\n'.join(unified_diff.split('\n')[4:])
 
     # TODO(danvk): only annotate comments on this file.
-    github_comments.add_line_numbers_to_comments(pr, comments['diff_level'])
+    github_comments.add_line_numbers_to_comments(token, user, repo, pr['base']['sha'], comments['diff_level'])
 
-    differing_files = git.get_differing_files(clone_url, sha1, sha2)
-    before = git.get_file_at_ref(clone_url, path, sha1)
-    after = git.get_file_at_ref(clone_url, path, sha2)
+    differing_files = [f['filename'] for f in diff_info['files']]
+    before = github.get_file_at_ref(token, user, repo, path, sha1)
+    after = github.get_file_at_ref(token, user, repo, path, sha2)
 
     def diff_url(path):
         return (url_for('file_diff', user=user, repo=repo, number=number) +
@@ -123,24 +124,27 @@ def file_diff(user, repo, number):
     
     pull_request_url = url_for('pull', user=user, repo=repo, number=number)
 
-    return render_template('file_diff.html', commits=commits, user=user, repo=repo, head_repo=head_repo, pull_request=pr, comments=comments, path=path, sha1=sha1, sha2=sha2, before_contents=before, after_contents=after, differing_files=linked_files, prev_file=prev_file, next_file=next_file, github_diff=github_diff, pull_request_url=pull_request_url)
+    return render_template('file_diff.html', commits=commits, user=user, repo=repo, pull_request=pr, comments=comments, path=path, sha1=sha1, sha2=sha2, before_contents=before, after_contents=after, differing_files=linked_files, prev_file=prev_file, next_file=next_file, github_diff=github_diff, pull_request_url=pull_request_url)
 
 
 # TODO(danvk): eliminate this request -- should all be done server-side
 @app.route("/diff", methods=["GET", "POST"])
 def diff():
+    token = session['token']
+    user = request.args.get('user', '')
     repo = request.args.get('repo', '')
     sha1 = request.args.get('sha1', '')
     sha2 = request.args.get('sha2', '')
     if not (repo and sha1 and sha2):
         return "Incomplete request (need repo, sha1, sha2)"
 
-    clone_url = 'https://github.com/%s.git' % repo
-    differing_files = git.get_differing_files(clone_url, sha1, sha2)
-    before = {p: git.get_file_at_ref(clone_url, p, sha1) for p in differing_files}
-    after = {p: git.get_file_at_ref(clone_url, p, sha2) for p in differing_files}
+    diff_info = github.get_diff_info(token, user, repo, sha1, sha2)
+    if not diff_info:
+        return "Unable to get diff for %s..%s" % (sha1, sha2)
 
-    return jsonify(files=differing_files, before=before, after=after)
+    differing_files = [f['filename'] for f in diff_info['files']]
+
+    return jsonify(files=differing_files)
 
 
 @app.route("/post_comment", methods=['POST'])
@@ -175,7 +179,7 @@ def post_comment():
     pr = github.get_pull_request(token, owner, repo, pull_number)
     base_sha = pr['base']['sha']
 
-    diff_position = github_comments.lineNumberToDiffPosition(pr, path, commit_id, line_number, False)  # False = on_left (for now!)
+    diff_position = github_comments.lineNumberToDiffPosition(token, owner, repo, base_sha, path, commit_id, line_number, False)  # False = on_left (for now!)
     if not diff_position:
         return "Unable to get diff position for %s:%s @%s" % (path, line_number, commit_id)
 
@@ -183,7 +187,7 @@ def post_comment():
 
     response = github.post_comment(token, owner, repo, pull_number, commit_id, path, diff_position, body)
     if response:
-        github_comments.add_line_number_to_comment(pr, response)
+        github_comments.add_line_number_to_comment(token, owner, repo, base_sha, response)
 
     return jsonify(response)
 
