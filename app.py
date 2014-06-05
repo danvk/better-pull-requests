@@ -7,12 +7,15 @@ import sys
 from flask import Flask, url_for, render_template, request, jsonify, session
 import github
 import github_comments
+import comment_db
 
 SECRETS = json.load(open('secrets.json'))
 CLIENT_SECRET = SECRETS['github_client_secret']
 Flask.secret_key = SECRETS['flask_secret_key']
 
 app = Flask(__name__)
+
+db = comment_db.CommentDb()
 
 @app.route("/repo/<user>/<repo>")
 def repo(user, repo):
@@ -73,8 +76,12 @@ def file_diff(user, repo, number):
     commits = github.get_pull_request_commits(token, user, repo, number)
     pr = github.get_pull_request(token, user, repo, number)
     comments = github.get_pull_request_comments(token, user, repo, number)
-
-    open('/tmp/commits.txt', 'wb').write(json.dumps(commits, indent=2))
+    draft_comments = db.get_draft_comments(session['login'], user, repo, number)
+    for dc in draft_comments:
+        dc['is_draft'] = True
+        dc['user'] = { 'login': dc['login'] }
+        del dc['login']
+        comments['diff_level'].append(dc)
 
     commit_to_comments = defaultdict(int)
     for comment in comments['diff_level']:
@@ -149,6 +156,51 @@ def diff():
     return jsonify(files=differing_files)
 
 
+@app.route("/save_draft", methods=['POST'])
+def save_draft_comment():
+    owner = request.form['owner']
+    repo = request.form['repo']
+    path = request.form['path']
+    pull_number = request.form['pull_number']
+    commit_id = request.form['commit_id']
+    line_number = int(request.form['line_number'])
+    comment = {
+      'owner': owner,
+      'repo': repo,
+      'pull_number': pull_number,
+      'path': path,
+      'original_commit_id': commit_id,
+      'body': request.form['body']
+    }
+
+    comment_id = request.form.get('id')
+    if comment_id:
+        comment['id'] = comment_id
+
+    token = session['token']
+    pr = github.get_pull_request(token, owner, repo, pull_number)
+    base_sha = pr['base']['sha']
+
+    position, hunk = github_comments.lineNumberToDiffPositionAndHunk(token, owner, repo, base_sha, path, commit_id, line_number, False)
+    if not position:
+        return "Unable to get diff position for %s:%s @%s" % (path, line_number, commit_id)
+
+    comment['original_position'] = position
+    comment['diff_hunk'] = hunk
+
+    result = db.add_draft_comment(session['login'], comment)
+    # This is a bit roundabout, but more reliable!
+    result.update({
+        'user': {
+            'login': result['login']
+        },
+        'is_draft': True
+    })
+    del result['login']
+    github_comments.add_line_number_to_comment(token, owner, repo, base_sha, result)
+    return jsonify(result)
+
+
 @app.route("/post_comment", methods=['POST'])
 def post_comment():
     owner = request.form['owner']
@@ -181,11 +233,9 @@ def post_comment():
     pr = github.get_pull_request(token, owner, repo, pull_number)
     base_sha = pr['base']['sha']
 
-    diff_position = github_comments.lineNumberToDiffPosition(token, owner, repo, base_sha, path, commit_id, line_number, False)  # False = on_left (for now!)
+    diff_position, _ = github_comments.lineNumberToDiffPositionAndHunk(token, owner, repo, base_sha, path, commit_id, line_number, False)  # False = on_left (for now!)
     if not diff_position:
         return "Unable to get diff position for %s:%s @%s" % (path, line_number, commit_id)
-
-    sys.stderr.write('diff_position=%s\n' % diff_position)
 
     response = github.post_comment(token, owner, repo, pull_number, commit_id, path, diff_position, body)
     if response:
@@ -215,12 +265,19 @@ def oauth_callback():
     else:
         return "Unable to authenticate."
 
+    # Fetch basic user data to store in session state
+    user_info = github.get_current_user_info(session['token'])
+    if not user_info:
+        return "Unable to get user info."
+    session['login'] = user_info['login']
+
     return "Authenticated successfully!"
 
 
 @app.route("/")
 def hello():
     return render_template('index.html')
+
 
 if __name__ == "__main__":
     app.run(debug=True)

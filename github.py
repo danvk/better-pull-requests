@@ -88,6 +88,11 @@ def _fetch_api(token, path, **kwargs):
     return j
 
 
+def get_current_user_info(token):
+    """Returns information about the authenticated user."""
+    return _fetch_api(token, '/user')
+
+
 def get_pull_requests(token, user, repo):
     return _fetch_api(token, '/repos/%(user)s/%(repo)s/pulls', user=user, repo=repo)
 

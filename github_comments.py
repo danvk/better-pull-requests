@@ -40,7 +40,7 @@ def add_line_numbers_to_comments(token, owner, repo, base_sha, comments):
         add_line_number_to_comment(token, owner, repo, base_sha, comment)
 
 
-def lineNumberToDiffPosition(token, owner, repo, base_sha, path, commit_id, line_number, on_left):
+def lineNumberToDiffPositionAndHunk(token, owner, repo, base_sha, path, commit_id, line_number, on_left):
     diff_lines = _get_github_diff_lines(token, owner, repo, path, base_sha, commit_id)
     if not diff_lines:
         sys.stderr.write('Unable to get diff\n')
@@ -48,11 +48,13 @@ def lineNumberToDiffPosition(token, owner, repo, base_sha, path, commit_id, line
 
     left_line_no = -1
     right_line_no = -1
+    hunk_start = -1
     for position, diff_line in enumerate(diff_lines):
         m = DIFF_HUNK_HEADER_RE.match(diff_line)
         if m:
             left_line_no = int(m.group(1)) - 1
             right_line_no = int(m.group(2)) - 1
+            hunk_start = position
             continue
         assert left_line_no >= 0 and right_line_no >= 0
 
@@ -72,6 +74,6 @@ def lineNumberToDiffPosition(token, owner, repo, base_sha, path, commit_id, line
         # sys.stderr.write('%d/%d (want %d) %s\n' % (left_line_no, right_line_no, line_number, diff_line))
         if ((on_left and left_line_no == line_number) or
             (not on_left and right_line_no == line_number)):
-            return position
+            return (position, '\n'.join(diff_lines[hunk_start:1+position]))
 
-    return False
+    return False, None

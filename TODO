@@ -6,6 +6,8 @@ x Try to get rid of git.py -- it will make it easier to host this as a service.
 - Move all the JS of pull_request.html into a JS file
 - Change "user" to "owner" in github.py and in templates
 - Consolidate shared code between pull_request.html and file_diff.html
+- Consolidate shared code between /pull and /diff handlers
+- Consolidate draft / published comment transformation code.
 
 User-facing:
 x Add 'u' shortcut and link back to pull request view.
@@ -26,3 +28,4 @@ x Render the Pull Request description with Markdown.
 - Copy github markdown CSS
 - Auto-link "Pull Request...", "Issue...", etc.
 - Batch comments
+- Make a better home page: show your open PRs, repos you're watching and their pull requests.

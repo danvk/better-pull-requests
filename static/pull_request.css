@@ -36,6 +36,10 @@ td.before, td.after, td.skip {
   margin: 3px -0.2em 3px -0.3em;
 }
 
+.inline-comment.draft .is_draft {
+  display: block !important;
+}
+
 .inline-editable-comment {
   padding-right: 9px;
 }

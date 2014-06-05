@@ -181,7 +181,11 @@ function renderComment(comment) {
 
   $div.find('.user').text(comment.user.login);
   $div.find('.updated_at').text(comment.updated_at);
-  $div.find('.github-link').attr('href', comment.html_url);
+  if (comment.html_url) {
+    $div.find('.github-link').attr('href', comment.html_url);
+  } else {
+    $div.find('.github-link').hide();
+  }
   $div.find('.inline-comment-body').html(
       new Showdown.converter().makeHtml(comment.body));
   if (comment.is_draft) {
