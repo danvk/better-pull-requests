@@ -14,8 +14,8 @@
 <input name='sha1' type=radio value={{commit.sha}} {%if commit.sha == sha1%}checked{%endif%}>
 <input name='sha2' type=radio value={{commit.sha}} {%if commit.sha == sha2%}checked{%endif%}>
 {{commit.author.date}}
-{{commit.sha}}
-{{commit.message}}
+<span class='sha'>{{commit.sha|truncate(7, True, end='')}}</span>
+{{commit.commit.message}}
 {{commit.author.login}}
 <span sha={{commit.sha}} class="comment-count"></span>
 <br>

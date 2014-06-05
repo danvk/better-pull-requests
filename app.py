@@ -74,6 +74,8 @@ def file_diff(user, repo, number):
     pr = github.get_pull_request(token, user, repo, number)
     comments = github.get_pull_request_comments(token, user, repo, number)
 
+    open('/tmp/commits.txt', 'wb').write(json.dumps(commits, indent=2))
+
     commit_to_comments = defaultdict(int)
     for comment in comments['diff_level']:
         commit_to_comments[comment['original_commit_id']] += 1

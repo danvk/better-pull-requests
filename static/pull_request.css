@@ -43,3 +43,7 @@ td.before, td.after, td.skip {
 .diff-current {
   font-weight: bold;
 }
+
+.sha {
+  font-family:Courier, monospace
+}
