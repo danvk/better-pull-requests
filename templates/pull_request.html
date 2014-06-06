@@ -83,18 +83,19 @@ function displayDiffs(before_ref, after_ref, data) {
 }
 
 $(function() {
-  $('#show-diff').click(function() {
+  $('#show-diff').click(function(e) {
     $('#files-changed').html('&hellip;');
 
     var sha1 = $('input[name="sha1"]:checked').val(),
         sha2 = $('input[name="sha2"]:checked').val();
-        $.getJSON('/diff', { user: user, repo: repo, sha1: sha1, sha2: sha2 })
-        .success(function(data) {
-          displayDiffs(sha1, sha2, data);
-        })
-        .error(function(err) {
-          $('#files-changed').text(JSON.stringify(err));
-        });
+    $.getJSON('/diff', { user: user, repo: repo, sha1: sha1, sha2: sha2 })
+    .success(function(data) {
+      displayDiffs(sha1, sha2, data);
+    })
+    .error(function(err) {
+      $('#files-changed').text(JSON.stringify(err));
+    });
+    e.preventDefault();
   });
 
   // Default view
