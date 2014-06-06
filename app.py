@@ -3,6 +3,7 @@ import json
 import urllib
 import requests
 import sys
+import re
 
 from flask import Flask, url_for, render_template, request, jsonify, session
 import github
@@ -64,6 +65,9 @@ def pull(user, repo, number):
     })
 
     for commit in commits:
+        commit['commit']['short_message'] = re.sub(r'[\n\r].*', '', commit['commit']['message'])
+
+    for commit in commits:
         sha = commit['sha']
         commit.update({
             'comment_count': commit_to_comments[sha],
@@ -106,6 +110,9 @@ def file_diff(user, repo, number):
         },
         'author': {'login': ''}
     })
+
+    for commit in commits:
+        commit['commit']['short_message'] = re.sub(r'[\n\r].*', '', commit['commit']['message'])
 
 
     # github excludes the first four header lines of "git diff"

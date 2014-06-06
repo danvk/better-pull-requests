@@ -14,7 +14,7 @@
 <input name='right' type=radio sha={{commit.sha}}>
 {{commit.author.date}}
 <span class='sha'>{{commit.sha|truncate(7, True, end='')}}</span>
-{{commit.commit.message}}
+{{commit.commit.short_message}}
 {{commit.author.login}}
 {% if commit.total_comment_count > 0 %}
 ({%if commit.comment_count > 0 %}{{commit.comment_count}} comments{%endif%}

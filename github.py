@@ -11,6 +11,8 @@ import requests
 
 GITHUB_API_ROOT = 'https://api.github.com'
 
+WHITESPACE_RE = re.compile(r'^[ \t\n\r]*$')
+
 # TODO(danvk): inject a cache from the server module
 #from werkzeug.contrib.cache import SimpleCache
 #cache = SimpleCache()
@@ -27,13 +29,13 @@ class SimpleCache(object):
         f = self._file_for_key(k)
         if os.path.exists(f):
             try:
-                return open(f).read()
+                return open(f).read().decode('utf-8')
             except:
                 return None
 
     def set(self, k, v):
         f = self._file_for_key(k)
-        open(f, 'wb').write(v)
+        open(f, 'wb').write(v.encode('utf-8'))
 
 
 cache = SimpleCache()
@@ -78,6 +80,8 @@ def _fetch_api(token, path, **kwargs):
 
     response = _fetch_url(token, url)
     if response is None:
+        return None
+    if WHITESPACE_RE.match(response):
         return None
 
     try:

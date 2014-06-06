@@ -15,7 +15,7 @@
 <input name='sha2' type=radio value={{commit.sha}} {%if commit.sha == sha2%}checked{%endif%}>
 {{commit.author.date}}
 <span class='sha'>{{commit.sha|truncate(7, True, end='')}}</span>
-{{commit.commit.message}}
+{{commit.commit.short_message}}
 {{commit.author.login}}
 <span sha={{commit.sha}} class="comment-count"></span>
 <br>
@@ -127,6 +127,7 @@ function createCommentBox(onLeft, lineNumber) {
 
   var $td = $('td.' + (onLeft ? 'before' : 'after') + '.line-' + lineNumber);
   $td.append($box);
+  return $box;
 }
 
 $(function() {
@@ -171,8 +172,9 @@ $(function() {
         }
       }
       if (lineNumber === undefined) return;
-      createCommentBox(onLeft, lineNumber);
+      var $box = createCommentBox(onLeft, lineNumber);
       e.preventDefault();
+      $box.find('textarea').focus();
       return false;
   });
 
