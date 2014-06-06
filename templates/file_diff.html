@@ -8,22 +8,7 @@
 <h2><a href="{{pull_request_url}}">{{pull_request.title}}</a></h2>
 <p class="description">{{pull_request.body}}</p>
 
-<h2>Commits</h2>
-<form action='#'>
-{% for commit in commits %}
-<input name='sha1' type=radio value={{commit.sha}} {%if commit.sha == sha1%}checked{%endif%}>
-<input name='sha2' type=radio value={{commit.sha}} {%if commit.sha == sha2%}checked{%endif%}>
-{{commit.author.date}}
-<span class='sha'>{{commit.sha|truncate(7, True, end='')}}</span>
-{{commit.commit.short_message}}
-{{commit.author.login}}
-<span sha={{commit.sha}} class="comment-count"></span>
-<br>
-{% endfor %}
-<input type=hidden name=path value="{{path}}">
-
-<p><input type=submit id="diff" value="Show Diff"></p>
-</form>
+{% include 'commit_list.html' %}
 
 <h2>{{path}}</h2>
 <div id="thediff"></div>
@@ -104,8 +89,7 @@ function displayDiffs(before_ref, after_ref, baseTxt, afterTxt) {
 }
 
 function attachComment(before_ref, after_ref, diffDiv, comment) {
-  var pos = comment.parsed_position ||
-      parseDiffPosition(comment.diff_hunk, comment.position_in_diff_hunk);
+  var pos = parseDiffPosition(comment.diff_hunk, comment.position_in_diff_hunk);
   if (comment.original_commit_id == before_ref) {
     pos.onLeft = !pos.onLeft;
   }
@@ -135,6 +119,10 @@ $(function() {
   $('.comment-body').map(function(_, div) { collapseQuotes(div) });
 
   displayDiffs(sha1, sha2, beforeContents, afterContents);
+
+  $('#show-diff').on('click', function() {
+    $(this).closest('form').submit();
+  });
 
   $(document).on('keydown', function(e) {
     if (e.ctrlKey || e.altKey || e.metaKey ||

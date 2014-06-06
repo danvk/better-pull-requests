@@ -8,21 +8,7 @@
 <h2>{{pull_request.title}}</h2>
 <p class="description">{{pull_request.body}}</p>
 
-<h2>Commits</h2>
-{% for commit in commits %}
-<input name='left' type=radio sha={{commit.sha}}>
-<input name='right' type=radio sha={{commit.sha}}>
-{{commit.author.date}}
-<span class='sha'>{{commit.sha|truncate(7, True, end='')}}</span>
-{{commit.commit.short_message}}
-{{commit.author.login}}
-{% if commit.total_comment_count > 0 %}
-({%if commit.comment_count > 0 %}{{commit.comment_count}} comments{%endif%}
-{%if commit.draft_comment_count%}{{commit.draft_comment_count}} drafts {% endif %}){%endif%}
-<br>
-{% endfor %}
-
-<p><button id="diff">Show Diff</button></p>
+{% include 'commit_list.html' %}
 
 <h2>Files Changed</h2>
 <div id="files-changed"></div>
@@ -97,11 +83,11 @@ function displayDiffs(before_ref, after_ref, data) {
 }
 
 $(function() {
-  $('#diff').click(function() {
+  $('#show-diff').click(function() {
     $('#files-changed').html('&hellip;');
 
-    var sha1 = $('input[name="left"]:checked').attr('sha'),
-        sha2 = $('input[name="right"]:checked').attr('sha');
+    var sha1 = $('input[name="sha1"]:checked').val(),
+        sha2 = $('input[name="sha2"]:checked').val();
         $.getJSON('/diff', { user: user, repo: repo, sha1: sha1, sha2: sha2 })
         .success(function(data) {
           displayDiffs(sha1, sha2, data);
@@ -112,9 +98,9 @@ $(function() {
   });
 
   // Default view
-  $('input[name=left]:last').click();
-  $('input[name=right]:first').click();
-  $('#diff').click();
+  $('input[name=sha1]:last').click();
+  $('input[name=sha2]:first').click();
+  $('#show-diff').click();
 
   // Simplify comment view
   $('.comment-body').map(function(_, div) { collapseQuotes(div) });
