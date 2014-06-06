@@ -55,3 +55,7 @@ td.before, td.after, td.skip {
 .sha {
   font-family:Courier, monospace
 }
+
+#top-level-comments {
+  max-width: 800px;
+}

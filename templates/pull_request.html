@@ -21,11 +21,9 @@
 </div>
 
 <h2>Discussion</h2>
-{% for comment in comments.top_level %}
-<p>{{comment.updated_at}} {{comment.user.login}}:<br>
-<div class="comment-body">{{comment.body}}</div></p>
-<hr/>
-{% endfor %}
+<div id="top-level-comments"></div>
+
+{% include 'comment_templates.html' %}
 
 <script src="/static/jquery-2.1.1.min.js"></script>
 <script src="/static/underscore-min.js"></script>
@@ -102,6 +100,11 @@ $(function() {
   $('input[name=sha1]:last').click();
   $('input[name=sha2]:first').click();
   $('#show-diff').click();
+
+  // Top-level comments
+  comments.top_level.forEach(function(comment) {
+    $('#top-level-comments').append(renderComment(comment));
+  });
 
   // Simplify comment view
   $('.comment-body').map(function(_, div) { collapseQuotes(div) });
