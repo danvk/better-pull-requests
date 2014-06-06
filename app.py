@@ -42,9 +42,15 @@ def pull(user, repo, number):
     pr = github.get_pull_request(token, user, repo, number)
     comments = github.get_pull_request_comments(token, user, repo, number)
 
+    draft_comments = db.get_draft_comments(session['login'], user, repo, number)
+
     commit_to_comments = defaultdict(int)
     for comment in comments['diff_level']:
         commit_to_comments[comment['original_commit_id']] += 1
+    commit_to_draft_comments = defaultdict(int)
+    for comment in draft_comments:
+        commit_to_draft_comments[comment['original_commit_id']] += 1
+        comments['diff_level'].append(db.githubify_comment(comment))
 
     commits.reverse()
     # Add an entry for the base commit.
@@ -58,7 +64,12 @@ def pull(user, repo, number):
     })
 
     for commit in commits:
-        commit['comment_count'] = commit_to_comments[commit['sha']]
+        sha = commit['sha']
+        commit.update({
+            'comment_count': commit_to_comments[sha],
+            'draft_comment_count': commit_to_draft_comments[sha],
+            'total_comment_count': commit_to_comments[sha] + commit_to_draft_comments[sha]
+        })
 
     return render_template('pull_request.html', commits=commits, user=user, repo=repo, pull_request=pr, comments=comments)
 
@@ -78,11 +89,9 @@ def file_diff(user, repo, number):
     comments = github.get_pull_request_comments(token, user, repo, number)
     draft_comments = db.get_draft_comments(session['login'], user, repo, number)
     for dc in draft_comments:
-        dc['is_draft'] = True
-        dc['user'] = { 'login': dc['login'] }
-        del dc['login']
-        comments['diff_level'].append(dc)
+        comments['diff_level'].append(db.githubify_comment(dc))
 
+    # TODO(danvk): separate out draft, non-draft comments
     commit_to_comments = defaultdict(int)
     for comment in comments['diff_level']:
         commit_to_comments[comment['original_commit_id']] += 1
@@ -189,14 +198,8 @@ def save_draft_comment():
     comment['diff_hunk'] = hunk
 
     result = db.add_draft_comment(session['login'], comment)
+    result = db.githubify_comment(result)
     # This is a bit roundabout, but more reliable!
-    result.update({
-        'user': {
-            'login': result['login']
-        },
-        'is_draft': True
-    })
-    del result['login']
     github_comments.add_line_number_to_comment(token, owner, repo, base_sha, result)
     return jsonify(result)
 

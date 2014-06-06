@@ -87,3 +87,9 @@ class CommentDb(object):
         self._write()
         results.reverse()
         return copy.deepcopy(results)
+
+    def githubify_comment(self, comment):
+        comment['is_draft'] = True
+        comment['user'] = { 'login': comment['login'] }
+        del comment['login']
+        return comment
