@@ -53,6 +53,8 @@ def pull(user, repo, number):
         commit_to_draft_comments[comment['original_commit_id']] += 1
         comments['diff_level'].append(db.githubify_comment(comment))
 
+    github_comments.add_line_numbers_to_comments(token, user, repo, pr['base']['sha'], comments['diff_level'])
+
     commits.reverse()
     # Add an entry for the base commit.
     commits.append({

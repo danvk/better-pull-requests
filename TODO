@@ -10,13 +10,15 @@ x Try to get rid of git.py -- it will make it easier to host this as a service.
 - Consolidate draft / published comment transformation code.
 
 User-facing:
+- Add ability to write new top-level comments.
+- Add a "publish" button which publishes all new comments.
+- Add support for "reply_to"-style comments.
 x Add 'u' shortcut and link back to pull request view.
 x Render the Pull Request description with Markdown.
 - Hide character-by-character diffs if they're too large? (mimic gerrit)
 - When there's no diff, show "no diff", rather than the entire file on both sides.
 - Redirect to OAuth flow whenever it's required, and redirect back to the right place.
 - Return real error codes from XHR methods
-- Add support for "reply_to"-style comments.
 - Classify comments as addressed/not addressed
 - Add links to show more context
 - Make text copy/pastable

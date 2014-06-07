@@ -56,6 +56,6 @@ td.before, td.after, td.skip {
   font-family:Courier, monospace
 }
 
-#top-level-comments {
+.comments-list {
   max-width: 800px;
 }

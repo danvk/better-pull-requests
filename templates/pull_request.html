@@ -21,7 +21,12 @@
 </div>
 
 <h2>Discussion</h2>
-<div id="top-level-comments"></div>
+<div class="comments-list" id="top-level-comments"></div>
+
+<h2>Draft Comments</h2>
+<div class="comments-list" id="draft-comments"></div>
+
+<button id="publish">Publish Comments</button>
 
 {% include 'comment_templates.html' %}
 
@@ -104,6 +109,16 @@ $(function() {
   // Top-level comments
   comments.top_level.forEach(function(comment) {
     $('#top-level-comments').append(renderComment(comment));
+  });
+  // $('#top-level-comments').append($('#editable-comment-template').clone().removeAttr('id').show());
+
+  // Draft comments
+  comments['diff_level'].forEach(function(comment) {
+    if (!comment.is_draft) return;
+    var pos = parseDiffPosition(comment.diff_hunk, comment.position_in_diff_hunk);
+    $('#draft-comments').append(
+      $('<div>').text(comment.path + ":" + pos.lineNumber + " " + comment.diff_line),
+      renderComment(comment));
   });
 
   // Simplify comment view
