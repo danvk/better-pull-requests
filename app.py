@@ -5,7 +5,7 @@ import requests
 import sys
 import re
 
-from flask import Flask, url_for, render_template, request, jsonify, session
+from flask import Flask, url_for, render_template, request, jsonify, session, redirect
 import github
 import github_comments
 import comment_db
@@ -213,15 +213,11 @@ def save_draft_comment():
     return jsonify(result)
 
 
-@app.route("/post_comment", methods=['POST'])
-def post_comment():
+@app.route("/publish_draft_comments", methods=['POST'])
+def publish_draft_comments():
     owner = request.form['owner']
     repo = request.form['repo']
     pull_number = request.form['pull_number']
-    path = request.form['path']
-    commit_id = request.form['commit_id']
-    line_number = int(request.form['line_number'])
-    body = request.form['body']
 
     if not owner:
         return "Incomplete post_comment request, missing owner"
@@ -229,32 +225,29 @@ def post_comment():
         return "Incomplete post_comment request, missing repo"
     if not pull_number:
         return "Incomplete post_comment request, missing pull_number"
-    if not path:
-        return "Incomplete post_comment request, missing path"
-    if not commit_id:
-        return "Incomplete post_comment request, missing commit_id"
-    if not line_number:
-        return "Incomplete post_comment request, missing line_number"
-    if not body:
-        return "Incomplete post_comment request, missing body"
 
     token = session['token']
     if not token:
-        return "You must be oauthed to post a comment."
+        return "You must be signed in to publish comments."
 
-    pr = github.get_pull_request(token, owner, repo, pull_number)
-    base_sha = pr['base']['sha']
+    draft_comments = db.get_draft_comments(session['login'], owner, repo, pull_number)
+    if not draft_comments:
+        return "No comments to publish!"
 
-    diff_position, _ = github_comments.lineNumberToDiffPositionAndHunk(token, owner, repo, base_sha, path, commit_id, line_number, False)  # False = on_left (for now!)
-    if not diff_position:
-        return "Unable to get diff position for %s:%s @%s" % (path, line_number, commit_id)
+    # TODO(danvk): publish comments in parallel
+    for comment in draft_comments:
+        result = github.post_comment(
+            token, owner, repo, pull_number,
+            comment['original_commit_id'],
+            comment['path'],
+            comment['original_position'],
+            comment['body'])
+        if not result:
+            return "Unable to publish comment: %s" % json.dumps(comment)
+        db.delete_draft_comments([comment['id']])
 
-    response = github.post_comment(token, owner, repo, pull_number, commit_id, path, diff_position, body)
-    if response:
-        github_comments.add_line_number_to_comment(token, owner, repo, base_sha, response)
-
-    return jsonify(response)
-
+    sys.stderr.write('Successfully published %d comments.\n' % len(draft_comments))
+    return redirect(url_for('pull', user=owner, repo=repo, number=pull_number))
 
 
 @app.route("/oauth_callback")

@@ -26,7 +26,12 @@
 <h2>Draft Comments</h2>
 <div class="comments-list" id="draft-comments"></div>
 
-<button id="publish">Publish Comments</button>
+<form action="/publish_draft_comments" method="POST">
+  <input type=hidden name=owner value="{{user}}">
+  <input type=hidden name=repo value="{{repo}}">
+  <input type=hidden name=pull_number value="{{pull_request.number}}">
+  <input type="submit" value="Publish Comments">
+</form>
 
 {% include 'comment_templates.html' %}
 
