@@ -180,3 +180,11 @@ def post_comment(token, user, repo, pull_number, commit_id, path, position, body
         'position': position,
         'body': body
         }, user=user, repo=repo, pull_number=pull_number)
+
+
+def post_issue_comment(token, user, repo, issue_number, body):
+    post_path = '/repos/%(user)s/%(repo)s/issues/%(issue_number)s/comments'
+
+    return _post_api(token, post_path, {
+        'body': body
+        }, user=user, repo=repo, issue_number=issue_number)

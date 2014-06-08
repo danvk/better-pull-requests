@@ -59,3 +59,7 @@ td.before, td.after, td.skip {
 .comments-list {
   max-width: 800px;
 }
+textarea[name=top_level_comment] {
+  width: 800px;
+  display: block;
+}

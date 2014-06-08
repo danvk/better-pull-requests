@@ -219,6 +219,8 @@ def publish_draft_comments():
     repo = request.form['repo']
     pull_number = request.form['pull_number']
 
+    new_top_level = request.form['top_level_comment']
+
     if not owner:
         return "Incomplete post_comment request, missing owner"
     if not repo:
@@ -247,6 +249,12 @@ def publish_draft_comments():
         db.delete_draft_comments([comment['id']])
 
     sys.stderr.write('Successfully published %d comments.\n' % len(draft_comments))
+
+    if new_top_level:
+        result = github.post_issue_comment(token, owner, repo, pull_number, new_top_level)
+        if not result:
+            return "Unable to publish comment: %s" % new_top_level
+
     return redirect(url_for('pull', user=owner, repo=repo, number=pull_number))
 
 

@@ -1,6 +1,4 @@
 Cleanup tasks:
-x Don't filter the returned dicts in github.py
-x Try to get rid of git.py -- it will make it easier to host this as a service.
 - Move more processing out of JS and into Python (eliminate /diff XHR)
 - Use Mocha for JS testing
 - Move all the JS of pull_request.html into a JS file
@@ -9,9 +7,12 @@ x Try to get rid of git.py -- it will make it easier to host this as a service.
 - Consolidate shared code between /pull and /diff handlers
 - Consolidate draft / published comment transformation code.
 
+x Don't filter the returned dicts in github.py
+x Try to get rid of git.py -- it will make it easier to host this as a service.
+
 User-facing:
-- Add ability to write new top-level comments.
 - Add support for "reply_to"-style comments.
+- Add a way to bust the github API cache
 - Hide character-by-character diffs if they're too large? (mimic gerrit)
 - When there's no diff, show "no diff", rather than the entire file on both sides.
 - Redirect to OAuth flow whenever it's required, and redirect back to the right place.
@@ -32,3 +33,4 @@ x Only show first line of commit message in commit list.
 x Add a "publish" button which publishes all new comments.
 x Add 'u' shortcut and link back to pull request view.
 x Render the Pull Request description with Markdown.
+x Add ability to write new top-level comments.

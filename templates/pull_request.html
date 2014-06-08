@@ -27,6 +27,7 @@
 <div class="comments-list" id="draft-comments"></div>
 
 <form action="/publish_draft_comments" method="POST">
+  <textarea rows=4 name="top_level_comment"></textarea>
   <input type=hidden name=owner value="{{user}}">
   <input type=hidden name=repo value="{{repo}}">
   <input type=hidden name=pull_number value="{{pull_request.number}}">
@@ -115,7 +116,6 @@ $(function() {
   comments.top_level.forEach(function(comment) {
     $('#top-level-comments').append(renderComment(comment));
   });
-  // $('#top-level-comments').append($('#editable-comment-template').clone().removeAttr('id').show());
 
   // Draft comments
   comments['diff_level'].forEach(function(comment) {
