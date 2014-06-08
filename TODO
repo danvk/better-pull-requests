@@ -12,7 +12,6 @@ x Try to get rid of git.py -- it will make it easier to host this as a service.
 
 User-facing:
 - Add support for "reply_to"-style comments.
-- Add a way to bust the github API cache
 - Hide character-by-character diffs if they're too large? (mimic gerrit)
 - When there's no diff, show "no diff", rather than the entire file on both sides.
 - Redirect to OAuth flow whenever it's required, and redirect back to the right place.
@@ -34,3 +33,4 @@ x Add a "publish" button which publishes all new comments.
 x Add 'u' shortcut and link back to pull request view.
 x Render the Pull Request description with Markdown.
 x Add ability to write new top-level comments.
+x Add a way to bust the github API cache

@@ -194,3 +194,21 @@ function renderComment(comment) {
   return $div.get(0);
 }
 
+
+/**
+ * Check for updates to the current pull request.
+ * Displays a "please reload" message if any is found.
+ */
+function checkForUpdates(owner, repo, pull_number, updated_at) {
+  $.post('/check_for_updates', {
+    'owner': owner,
+    'repo': repo,
+    'pull_number': pull_number,
+    'updated_at': updated_at
+  })
+  .success(function(response) {
+    if (response == "OK") return;
+
+    $('#refresh-update-available').show();
+  });
+}

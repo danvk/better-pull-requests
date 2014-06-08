@@ -37,14 +37,20 @@ class SimpleCache(object):
         f = self._file_for_key(k)
         open(f, 'wb').write(v.encode('utf-8'))
 
+    def delete_multi(self, ks):
+        for k in ks:
+            f = self._file_for_key(k)
+            if os.path.exists(f):
+                os.unlink(f)
+
 
 cache = SimpleCache()
 
 
-def _fetch_url(token, url, extra_headers=None):
+def _fetch_url(token, url, extra_headers=None, bust_cache=False):
     key = url + json.dumps(extra_headers)
     cached = cache.get(key)
-    if cached is not None:
+    if cached is not None and not bust_cache:
         return cached
     sys.stderr.write('Uncached request for %s\n' % url)
     sys.stderr.write('Token=%s\n' % token)
@@ -74,11 +80,8 @@ def _post_api(token, path, obj, **kwargs):
     return r.json()
 
 
-def _fetch_api(token, path, **kwargs):
-    url = (GITHUB_API_ROOT + path) % kwargs
-    assert '%' not in url
-
-    response = _fetch_url(token, url)
+def _fetch_api(token, url, bust_cache=False):
+    response = _fetch_url(token, url, bust_cache=bust_cache)
     if response is None:
         return None
     if WHITESPACE_RE.match(response):
@@ -92,22 +95,32 @@ def _fetch_api(token, path, **kwargs):
     return j
 
 
+# caching: never
 def get_current_user_info(token):
     """Returns information about the authenticated user."""
-    return _fetch_api(token, '/user')
+    return _fetch_api(token, GITHUB_API_ROOT + '/user', bust_cache=True)
 
 
-def get_pull_requests(token, user, repo):
-    return _fetch_api(token, '/repos/%(user)s/%(repo)s/pulls', user=user, repo=repo)
+# caching: should always check after calling
+def get_pull_requests(token, user, repo, bust_cache=False):
+    url = (GITHUB_API_ROOT + '/repos/%(user)s/%(repo)s/pulls') % {'user': user, 'repo': repo}
+    return _fetch_api(token, url, bust_cache=bust_cache)
 
 
-def get_pull_request(token, user, repo, pull_number):
-    return _fetch_api(token, '/repos/%(user)s/%(repo)s/pulls/%(pull_number)s', user=user, repo=repo, pull_number=pull_number)
+# caching: should check after calling
+def get_pull_request(token, user, repo, pull_number, bust_cache=False):
+    url = (GITHUB_API_ROOT + '/repos/%(user)s/%(repo)s/pulls/%(pull_number)s') % {'user': user, 'repo': repo, 'pull_number': pull_number}
+    return _fetch_api(token, url, bust_cache=bust_cache)
 
 
+def _commits_url(user, repo, pull_number):
+    return (GITHUB_API_ROOT + '/repos/%(user)s/%(repo)s/pulls/%(pull_number)s/commits') % {
+            'user': user, 'repo': repo, 'pull_number': pull_number}
+
+# caching: expires when pull_request's updated_at changes
 def get_pull_request_commits(token, user, repo, pull_number):
     """Returns commits from first to last."""
-    commits = _fetch_api(token, '/repos/%(user)s/%(repo)s/pulls/%(pull_number)s/commits', user=user, repo=repo, pull_number=pull_number)
+    commits = _fetch_api(token, _commits_url(user, repo, pull_number))
 
     if not commits:
         return None
@@ -117,24 +130,34 @@ def get_pull_request_commits(token, user, repo, pull_number):
     return commits
 
 
+def _comments_urls(user, repo, pull_number):
+    issue_url = '/repos/%(user)s/%(repo)s/issues/%(pull_number)s/comments' % {'user': user, 'repo': repo, 'pull_number': pull_number}
+    diff_url = '/repos/%(user)s/%(repo)s/pulls/%(pull_number)s/comments' % {'user': user, 'repo': repo, 'pull_number': pull_number}
+    return GITHUB_API_ROOT + issue_url, GITHUB_API_ROOT + diff_url
+
+
+# caching: expires when pull_request's updated_at changes
 def get_pull_request_comments(token, user, repo, pull_number):
     # There are two types of comments:
     # 1. top level (these are issue comments)
     # 2. diff-level (these are pull requests comments)
     # TODO(danvk): are there also file-level comments?
-
-    issue_comments = _fetch_api(token, '/repos/%(user)s/%(repo)s/issues/%(pull_number)s/comments', user=user, repo=repo, pull_number=pull_number) or []
-    pr_comments = _fetch_api(token, '/repos/%(user)s/%(repo)s/pulls/%(pull_number)s/comments', user=user, repo=repo, pull_number=pull_number) or []
+    issue_url, diff_url = _comments_urls(user, repo, pull_number)
+    issue_comments = _fetch_api(token, issue_url) or []
+    pr_comments = _fetch_api(token, diff_url) or []
 
     return {'top_level': issue_comments, 'diff_level': pr_comments}
 
 
+# caching: never expires
 def get_diff_info(token, user, repo, sha1, sha2):
     # https://developer.github.com/v3/repos/commits/#compare-two-commits
     # Highlights include files.{filename,additions,deletions,changes}
-    return _fetch_api(token, '/repos/%(user)s/%(repo)s/compare/%(sha1)s...%(sha2)s', user=user, repo=repo, sha1=sha1, sha2=sha2)
+    url = (GITHUB_API_ROOT + '/repos/%(user)s/%(repo)s/compare/%(sha1)s...%(sha2)s') % {'user': user, 'repo': repo, 'sha1': sha1, 'sha2': sha2}
+    return _fetch_api(token, url)
 
 
+# caching: never expires
 def get_file_diff(token, user, repo, path, sha1, sha2):
     # https://developer.github.com/v3/repos/commits/#compare-two-commits
     # Highlights include files.{filename,additions,deletions,changes}
@@ -166,11 +189,13 @@ def get_file_diff(token, user, repo, path, sha1, sha2):
     return unified_diff[start:limit]
 
 
+# caching: never expires
 def get_file_at_ref(token, user, repo, path, sha):
     url = (GITHUB_API_ROOT + '/repos/%(user)s/%(repo)s/contents/%(path)s?ref=%(sha)s') % {'user': user, 'repo': repo, 'path': path, 'sha': sha}
     return _fetch_url(token, url, extra_headers={'Accept': 'application/vnd.github.3.raw'})
 
 
+# caching: n/a
 def post_comment(token, user, repo, pull_number, commit_id, path, position, body):
     post_path = '/repos/%(user)s/%(repo)s/pulls/%(pull_number)s/comments'
 
@@ -182,9 +207,18 @@ def post_comment(token, user, repo, pull_number, commit_id, path, position, body
         }, user=user, repo=repo, pull_number=pull_number)
 
 
+# caching: n/a
 def post_issue_comment(token, user, repo, issue_number, body):
     post_path = '/repos/%(user)s/%(repo)s/issues/%(issue_number)s/comments'
 
     return _post_api(token, post_path, {
         'body': body
         }, user=user, repo=repo, issue_number=issue_number)
+
+
+def expire_cache_for_pull_request(user, repo, pull_number):
+    """Delete all non-permanent cache entries relating to this PR."""
+    urls = (list(_comments_urls(user, repo, pull_number)) +
+            [_commits_url(user, repo, pull_number)])
+    keys = [url + json.dumps(None) for url in urls]
+    cache.delete_multi(keys)

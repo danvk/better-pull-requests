@@ -5,6 +5,7 @@
   <link rel=stylesheet href="/static/pull_request.css">
 </head>
 <body>
+<div id="refresh-update-available">There's something new! <a href="#" onclick="location.reload();">Reload</a> the page to see it.</div>
 <h2><a href="{{pull_request_url}}">{{pull_request.title}}</a></h2>
 <p class="description">{{pull_request.body}}</p>
 
@@ -54,6 +55,11 @@ var afterContents = {{after_contents|tojson|safe}};
 
 var sha1 = {{sha1|tojson|safe}};
 var sha2 = {{sha2|tojson|safe}};
+
+var user = {{user|tojson}};
+var repo = {{repo|tojson}};
+var pr_number = {{pull_request.number|tojson}};
+var updated_at = {{pull_request.updated_at|tojson}};
 
 function displayDiffs(before_ref, after_ref, baseTxt, afterTxt) {
   var diffDiv = renderDiff(baseTxt, afterTxt);
@@ -192,6 +198,8 @@ $(function() {
 
   // Format descriptions with markdown.
   $('.description').html(new Showdown.converter().makeHtml({{pull_request.body|tojson|safe}}));
+
+  checkForUpdates(user, repo, pr_number, updated_at);
 });
 </script>
 </body>

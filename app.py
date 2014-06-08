@@ -174,6 +174,25 @@ def diff():
     return jsonify(files=differing_files)
 
 
+@app.route("/check_for_updates", methods=['POST'])
+def check_for_updates():
+    owner = request.form['owner']
+    repo = request.form['repo']
+    pull_number = request.form['pull_number']
+    updated_at = request.form['updated_at']
+    token = session['token']
+
+    pr = github.get_pull_request(token, owner, repo, pull_number, bust_cache=True)
+
+    sys.stderr.write('cached updated_at=%s\n         uncached=%s\n' % (updated_at, pr['updated_at']))
+
+    if pr['updated_at'] <= updated_at:
+        return "OK"
+
+    github.expire_cache_for_pull_request(owner, repo, pull_number)
+    return "Update"
+
+
 @app.route("/save_draft", methods=['POST'])
 def save_draft_comment():
     owner = request.form['owner']
@@ -233,7 +252,7 @@ def publish_draft_comments():
         return "You must be signed in to publish comments."
 
     draft_comments = db.get_draft_comments(session['login'], owner, repo, pull_number)
-    if not draft_comments:
+    if not draft_comments and not new_top_level:
         return "No comments to publish!"
 
     # TODO(danvk): publish comments in parallel
@@ -255,6 +274,7 @@ def publish_draft_comments():
         if not result:
             return "Unable to publish comment: %s" % new_top_level
 
+    github.expire_cache_for_pull_request(owner, repo, pull_number)
     return redirect(url_for('pull', user=owner, repo=repo, number=pull_number))
 
 
