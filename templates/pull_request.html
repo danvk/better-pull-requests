@@ -13,7 +13,7 @@
 
 <h2>Files Changed</h2>
 <div id="files-changed">
-{% for f in differing_files %}
+{% for f in files %}
 <div class="changed-file">
   <a href="{{f.link}}">{{f.path}}</a>
   {% if f.total_comment_count %}(

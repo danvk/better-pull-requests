@@ -55,6 +55,7 @@ def _get_pr_info(session, owner, repo, number, sha1=None, sha2=None, path=None):
         commit_to_draft_comments[comment['original_commit_id']] += 1
         comments['diff_level'].append(db.githubify_comment(comment))
 
+    # TODO(danvk): only annotate comments on this file.
     github_comments.add_line_numbers_to_comments(token, owner, repo, pr['base']['sha'], comments['diff_level'])
 
     commits.reverse()
@@ -98,7 +99,8 @@ def _get_pr_info(session, owner, repo, number, sha1=None, sha2=None, path=None):
                 '?path=' + urllib.quote(path) +
                 '&sha1=' + urllib.quote(sha1) + '&sha2=' + urllib.quote(sha2))
 
-    linked_files = [{
+    # TODO(danvk): store diffstats in here.
+    files = [{
         'path': p,
         'link': diff_url(p),
         'comment_count': path_to_comments[p],
@@ -106,7 +108,7 @@ def _get_pr_info(session, owner, repo, number, sha1=None, sha2=None, path=None):
         'total_comment_count': path_to_comments[p] + path_to_draft_comments[p]
         } for p in differing_files]
 
-    return pr, commits, comments, linked_files
+    return pr, commits, comments, files
 
 
 @app.route("/pull/<owner>/<repo>/<number>")
@@ -115,7 +117,7 @@ def pull(owner, repo, number):
     sha2 = request.args.get('sha2', None)
     token = session['token']
 
-    pr, commits, comments, differing_files = _get_pr_info(session, owner, repo, number, sha1=sha1, sha2=sha2)
+    pr, commits, comments, files = _get_pr_info(session, owner, repo, number, sha1=sha1, sha2=sha2)
     if not sha1:
         sha1 = [c['sha'] for c in commits if 'selected_left' in c][0]
     if not sha2:
@@ -127,7 +129,7 @@ def pull(owner, repo, number):
                            commits=commits,
                            pull_request=pr,
                            comments=comments,
-                           differing_files=differing_files)
+                           files=files)
 
 
 @app.route("/pull/<owner>/<repo>/<number>/diff")
@@ -139,7 +141,7 @@ def file_diff(owner, repo, number):
         return "Incomplete request (need path, sha1, sha2)"
 
     token = session['token']
-    pr, commits, comments, differing_files = _get_pr_info(session, owner, repo, number, path=path, sha1=sha1, sha2=sha2)
+    pr, commits, comments, files = _get_pr_info(session, owner, repo, number, path=path, sha1=sha1, sha2=sha2)
 
     unified_diff = github.get_file_diff(token, owner, repo, path, sha1, sha2)
     if not unified_diff:
@@ -148,21 +150,22 @@ def file_diff(owner, repo, number):
     # github excludes the first four header lines of "git diff"
     github_diff = '\n'.join(unified_diff.split('\n')[4:])
 
-    # TODO(danvk): only annotate comments on this file.
     github_comments.add_in_response_to(pr, comments['diff_level'])
 
     before = github.get_file_at_ref(token, owner, repo, path, sha1) or ''
     after = github.get_file_at_ref(token, owner, repo, path, sha2) or ''
 
-    if path in differing_files:
-        file_idx = differing_files.index(path)
-        prev_file = differing_files[file_idx - 1] if file_idx > 0 else None
-        next_file = differing_files[file_idx + 1] if file_idx < len(differing_files) - 1 else None
+    idxs = [i for (i, f) in enumerate(files) if f['path'] == path]
+
+    if idxs:
+        file_idx = idxs[0]
+        prev_file = files[file_idx - 1] if file_idx > 0 else None
+        next_file = files[file_idx + 1] if file_idx < len(files) - 1 else None
     else:
         # The current file is not part of this diff.
         # Just do something sensible.
         prev_file = None
-        next_file = differing_files[0] if len(differing_files) > 0 else None
+        next_file = files[0] if len(files) > 0 else None
 
     pull_request_url = url_for('pull', owner=owner, repo=repo, number=number) + '?sha1=%s&sha2=%s' % (sha1, sha2)
 
@@ -174,7 +177,7 @@ def file_diff(owner, repo, number):
                            comments=comments,
                            path=path, sha1=sha1, sha2=sha2,
                            before_contents=before, after_contents=after,
-                           differing_files=differing_files,
+                           files=files,
                            prev_file=prev_file, next_file=next_file,
                            github_diff=github_diff,
                            pull_request_url=pull_request_url)

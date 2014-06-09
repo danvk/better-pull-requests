@@ -13,14 +13,14 @@
 
 <h2>Files Changed</h2>
 <div id="files-changed">
-{% for differing_file in differing_files %}
-{% if differing_file.path == path %}
+{% for f in files %}
+{% if f.path == path %}
 <div class="diff-link diff-current">
-  {{differing_file.path}}
+  {{f.path}}
 </div>
 {% else %}
 <div class="diff-link">
-  <a href="{{differing_file.link}}">{{differing_file.path}}</a>
+  <a href="{{f.link}}">{{f.path}}</a>
 </div>
 {% endif %}
 {% endfor %}
