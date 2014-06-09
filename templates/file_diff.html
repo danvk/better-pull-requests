@@ -69,15 +69,6 @@ function displayDiffs(before_ref, after_ref, baseTxt, afterTxt) {
 
   $('#thediff').append(diffDiv);
 
-  // Fill in the "(2 comments)" fields.
-  // TODO(danvk): do this in the python server.
-  var commentsByRef =
-      _.groupBy(_.filter(diff_comments, function(comment) { return comment.path == {{path|tojson}} }), function(comment) { return comment.original_commit_id });
-
-  _.forEach(commentsByRef, function(comments, sha) {
-      $('.comment-count[sha=' + sha + ']').text('(' + comments.length + ' comments)');
-  });
-
   var comments = _.filter(diff_comments, function(comment) {
       return (comment.original_commit_id == after_ref ||
               comment.original_commit_id == before_ref) &&
