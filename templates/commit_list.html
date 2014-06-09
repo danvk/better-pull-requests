@@ -8,6 +8,14 @@
 {{commit.commit.short_message}}
 {{commit.author.login}}
 <span sha={{commit.sha}} class="comment-count"></span>
+{% if commit.total_comment_count %}(
+  {% if commit.comment_count %}
+    {{ commit.comment_count }} comments
+  {% endif %}
+  {% if commit.draft_comment_count %}
+    {{ commit.draft_comment_count }} drafts
+  {% endif %}
+){% endif %}
 <br>
 {% endfor %}
 {% if path %}

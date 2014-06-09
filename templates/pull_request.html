@@ -58,7 +58,7 @@ function countComments(file, after_ref) {
     drafts: 0
   };
   comments.diff_level.forEach(function(comment) {
-    if (comment.original_commit_id == after_ref && comment.path == file) {
+    if (comment.original_commit_id == after_ref && (!file || comment.path == file)) {
       counts[comment.is_draft ? 'drafts' : 'submitted'] += 1;
     }
   });

@@ -30,10 +30,14 @@ td.before, td.after, td.skip {
 }
 
 .inline-comment {
-  background: lightgray;
+  background: lightyellow;
   border: 1px solid black;
   padding: 3px;
   margin: 3px -0.2em 3px -0.3em;
+}
+
+.inline-comment.unaddressed {
+  background: yellow;
 }
 
 .inline-comment.draft .is_draft {

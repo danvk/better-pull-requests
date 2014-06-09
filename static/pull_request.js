@@ -188,8 +188,9 @@ function renderComment(comment) {
   }
   $div.find('.inline-comment-body').html(
       new Showdown.converter().makeHtml(comment.body));
-  if (comment.is_draft) {
-    $div.addClass('draft');
+  $div.addClass(comment.is_draft ? 'draft' : 'published');
+  if ('is_addressed' in comment) {
+    $div.addClass(comment['is_addressed'] ? 'addressed' : 'unaddressed');
   }
   return $div.get(0);
 }
