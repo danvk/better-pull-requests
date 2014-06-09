@@ -127,6 +127,7 @@ def file_diff(user, repo, number):
 
     # TODO(danvk): only annotate comments on this file.
     github_comments.add_line_numbers_to_comments(token, user, repo, pr['base']['sha'], comments['diff_level'])
+    github_comments.add_in_response_to(pr, comments['diff_level'])
 
     differing_files = [f['filename'] for f in diff_info['files']]
     before = github.get_file_at_ref(token, user, repo, path, sha1) or ''

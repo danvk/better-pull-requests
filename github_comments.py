@@ -1,6 +1,8 @@
 import re
 import sys
 import github
+import itertools
+from collections import defaultdict
 
 DIFF_HUNK_HEADER_RE = re.compile(r'^@@ -([0-9]+),[0-9]+ \+([0-9]+),[0-9]+ @@')
 
@@ -77,3 +79,43 @@ def lineNumberToDiffPositionAndHunk(token, owner, repo, base_sha, path, commit_i
             return (position, '\n'.join(diff_lines[hunk_start:1+position]))
 
     return False, None
+
+
+def _threadify(comments):
+    """Adds 'reply_to' and 'is_addressed' fields where applicable."""
+    # Assume each comment is a reply to the last comment by a different
+    # user which hasn't already been replied to.
+    has_reply = defaultdict(bool)
+    for i, comment in enumerate(comments):
+        for j in xrange(i - 1, -1, -1):
+            other_comment = comments[j]
+            if has_reply[other_comment['id']]: continue
+            if comment['by_owner'] != other_comment['by_owner']:
+                comment['in_reply_to'] = other_comment['id']
+                has_reply[other_comment['id']] = True
+                if not other_comment['by_owner']:
+                    other_comment['is_addressed'] = True
+
+
+def add_in_response_to(pr, comments):
+    """Adds 'reply_to' and 'is_addressed' fields where applicable."""
+    # When the pull request owner replies to a comment, it's been addressed.
+    pr_owner = pr['user']['login']
+    def thread_key(c):
+        return (c['path'], c['original_commit_id'], c['original_position'])
+    def sort_key(c):
+        t = None
+        if 'created_at' in c: t = c['created_at']
+        if 'updated_at' in c: t = c['updated_at']
+        return (thread_key(c), t)  # earliest to latest
+
+    comments.sort(key=sort_key)
+    for comment in comments:
+        if comment['user']['login'] == pr_owner:
+            comment['by_owner'] = True
+        else:
+            comment['by_owner'] = False
+            comment['is_addressed'] = False
+
+    for _, grouped_comments in itertools.groupby(comments, thread_key):
+        _threadify(list(grouped_comments))
