@@ -93,6 +93,8 @@ function attachComment(before_ref, after_ref, diffDiv, comment) {
   if (comment.original_commit_id == before_ref) {
     pos.onLeft = !pos.onLeft;
   }
+  comment.on_left = pos.onLeft;
+  comment.line_number = pos.lineNumber;
 
   var lineEl = findDomElementForPosition(diffDiv, pos);
   $(lineEl).append(renderComment(comment));
@@ -100,14 +102,12 @@ function attachComment(before_ref, after_ref, diffDiv, comment) {
 
 var diff_comments = {{comments.diff_level|tojson|safe}};
 
-function createCommentBox(onLeft, lineNumber) {
-  var $box = $('#editable-comment-template')
-      .clone()
-      .removeAttr('id')
+function appendCommentBox(onLeft, lineNumber) {
+  var $box = $(createCommentBox())
       .data({
           'lineNumber': lineNumber,
           'onLeft': onLeft
-      }).show();
+      });
 
   var $td = $('td.' + (onLeft ? 'before' : 'after') + '.line-' + lineNumber);
   $td.append($box);
@@ -160,7 +160,7 @@ $(function() {
         }
       }
       if (lineNumber === undefined) return;
-      var $box = createCommentBox(onLeft, lineNumber);
+      var $box = appendCommentBox(onLeft, lineNumber);
       e.preventDefault();
       $box.find('textarea').focus();
       return false;
@@ -170,6 +170,7 @@ $(function() {
       var $comment = $(this).parent('.inline-editable-comment');
       var lineNumber = $comment.data('lineNumber');
       var commitId = $comment.data('onLeft') ? {{sha1|tojson|safe}} : {{sha2|tojson|safe}};
+      var inReplyTo = $comment.data('inReplyTo');
       var body = $comment.find('textarea').val();
 
       $.ajax({
@@ -183,12 +184,17 @@ $(function() {
           path: {{path|tojson|safe}},
           commit_id: commitId,
           line_number: lineNumber,
-          body: body
+          in_reply_to: inReplyTo,
+          body: body,
         }
       }).success(function(comment) {
         $comment.remove();
         diff_comments.push(comment);
         attachComment(sha1, sha2, $('#thediff').get(0), comment);
+        // Really we should recompute addressed/unaddressed here.
+        if (inReplyTo) {
+          $('.inline-comment').filter(function(_, x) { return $(x).data('id')==inReplyTo}).addClass('addressed').removeClass('unaddressed');
+        }
       }).error(function(err) {
         console.error(err);
         alert("Unable to post comment!\n\n" + JSON.stringify(err));

@@ -179,7 +179,11 @@ function findDomElementForPosition(diffEl, parsedPosition) {
 function renderComment(comment) {
   var $div = $('#comment-template').clone().removeAttr('id').show();
 
-  $div.data('id', comment.id);
+  $div.data({
+    'id': comment.id,
+    'lineNumber': comment.line_number,
+    'onLeft': comment.on_left
+  });
 
   $div.find('.user').text(comment.user.login);
   $div.find('.updated_at').text(comment.updated_at);
@@ -197,7 +201,9 @@ function renderComment(comment) {
   if (comment.user.login != logged_in_user) {
     $div.find('.reply').show();
   }
-  if (logged_in_user == pr_owner && !comment.is_addressed) {
+  if (logged_in_user == pr_owner &&
+      comment.user.login != logged_in_user &&
+      !comment.is_addressed) {
     $div.find('.done-ack-links').show();
   }
   if (comment.is_draft) {
@@ -225,14 +231,19 @@ function checkForUpdates(owner, repo, pull_number, updated_at) {
   });
 }
 
+
+function createCommentBox() {
+  return $('#editable-comment-template')
+      .clone()
+      .removeAttr('id')
+      .show()
+      .get(0);
+}
+
 $(function() {
   $(document).on('click', '.draft a.discard', function(e) {
     var $comment = $(this).parent('.inline-comment');
     var id = $comment.data('id');
-    if (!id) {
-      console.warn("Unable to get ID for comment while trying to discard.");
-      return;
-    }
 
     $.post('/discard_draft_comment', { 'id': id })
     .success(function(response) {
@@ -247,5 +258,21 @@ $(function() {
     });
 
     e.preventDefault();
+  })
+
+  .on('click', '.reply', function(e) {
+    var $comment = $(this).parent('.inline-comment');
+    var id = $comment.data('id');
+    var $box = $(createCommentBox())
+        .data({
+            'inReplyTo': id,
+            'lineNumber': $comment.data('lineNumber'),
+            'onLeft': $comment.data('onLeft')
+        });
+    $comment.after($box);
+    $box.find('textarea').focus();
+    e.preventDefault();
   });
+
+
 });

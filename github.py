@@ -196,15 +196,25 @@ def get_file_at_ref(token, user, repo, path, sha):
 
 
 # caching: n/a
-def post_comment(token, user, repo, pull_number, commit_id, path, position, body):
+def post_comment(token, user, repo, pull_number, comment):
+    # Have to have 'body', then either 'in_reply_to' or a full position spec.
+    if not 'body' in comment and (
+            ('in_reply_to' in comment) or
+            ('commit_id' in comment and
+             'path' in comment and
+             'position' in comment)):
+        return None
     post_path = '/repos/%(user)s/%(repo)s/pulls/%(pull_number)s/comments'
 
-    return _post_api(token, post_path, {
-        'commit_id': commit_id,
-        'path': path,
-        'position': position,
-        'body': body
-        }, user=user, repo=repo, pull_number=pull_number)
+    filtered_comment = {'body': comment['body']}
+    if 'in_reply_to' in comment:
+        filtered_comment['in_reply_to'] = comment['in_reply_to']
+    else:
+        for field in ['commit_id', 'path', 'position']:
+            filtered_comment[field] = comment[field]
+
+    return _post_api(token, post_path, filtered_comment,
+                     user=user, repo=repo, pull_number=pull_number)
 
 
 # caching: n/a

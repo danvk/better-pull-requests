@@ -194,6 +194,7 @@ def save_draft_comment():
     pull_number = request.form['pull_number']
     commit_id = request.form['commit_id']
     line_number = int(request.form['line_number'])
+    in_reply_to = request.args.get('in_reply_to')
     comment = {
       'owner': owner,
       'repo': repo,
@@ -202,6 +203,8 @@ def save_draft_comment():
       'original_commit_id': commit_id,
       'body': request.form['body']
     }
+    if in_reply_to:
+      comment['in_reply_to'] = in_reply_to
 
     comment_id = request.form.get('id')
     if comment_id:
@@ -250,12 +253,7 @@ def publish_draft_comments():
 
     # TODO(danvk): publish comments in parallel
     for comment in draft_comments:
-        result = github.post_comment(
-            token, owner, repo, pull_number,
-            comment['original_commit_id'],
-            comment['path'],
-            comment['original_position'],
-            comment['body'])
+        result = github.post_comment(token, owner, repo, pull_number, comment)
         if not result:
             return "Unable to publish comment: %s" % json.dumps(comment)
         db.delete_draft_comments([comment['id']])

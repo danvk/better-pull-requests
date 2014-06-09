@@ -87,6 +87,7 @@ def _threadify(comments):
     # user which hasn't already been replied to.
     has_reply = defaultdict(bool)
     for i, comment in enumerate(comments):
+        # TODO(danvk): if comment.is_reply_to is set, use that.
         for j in xrange(i - 1, -1, -1):
             other_comment = comments[j]
             if has_reply[other_comment['id']]: continue
