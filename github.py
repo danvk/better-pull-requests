@@ -20,7 +20,7 @@ class SimpleCache(object):
     def __init__(self):
         self._cache_dir = '/tmp/better-git-pr/cache'
         if not os.path.exists(self._cache_dir):
-            os.mkdir(self._cache_dir)
+            os.makedirs(self._cache_dir)
 
     def _file_for_key(self, k):
         return os.path.join(self._cache_dir, hashlib.md5(k).hexdigest())

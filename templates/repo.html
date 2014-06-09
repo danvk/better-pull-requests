@@ -7,7 +7,7 @@
 {% for pr in pull_requests %}
 <a href="{{pr.url|safe}}">{{pr.number}}</a>
 {{pr.title}}
-({{pr.user}})
+({{pr.user.login}})
 <br>
 {% endfor %}
 

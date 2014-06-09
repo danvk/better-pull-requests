@@ -22,18 +22,11 @@ db = comment_db.CommentDb()
 def repo(user, repo):
     token = session['token']
     pull_requests = github.get_pull_requests(token, user, repo)
-    sys.stderr.write('Found %d pull requests in %s/%s\n' % (
-        len(pull_requests), user, repo))
 
-    # TODO(danvk): augment pull_requests rather than doing this.
-    format_pull_requests = [{
-        'url': url_for('pull', user=user, repo=repo, number=pr['number']),
-        'number': pr['number'],
-        'title': pr['title'],
-        'user': pr['user']['login']
-        } for pr in pull_requests]
+    for pr in pull_requests:
+        pr['url'] = url_for('pull', user=user, repo=repo, number=pr['number'])
 
-    return render_template('repo.html', pull_requests=format_pull_requests)
+    return render_template('repo.html', pull_requests=pull_requests)
 
 
 @app.route("/pull/<user>/<repo>/<number>")
