@@ -81,21 +81,6 @@ def _get_pr_info(session, owner, repo, number, sha1=None, sha2=None, path=None):
         if sha2 == sha:
             commit['selected_right'] = True
 
-    return pr, commits, comments
-
-
-@app.route("/pull/<owner>/<repo>/<number>")
-def pull(owner, repo, number):
-    sha1 = request.args.get('sha1', None)
-    sha2 = request.args.get('sha2', None)
-    token = session['token']
-
-    pr, commits, comments = _get_pr_info(session, owner, repo, number, sha1=sha1, sha2=sha2)
-    if not sha1:
-        sha1 = [c['sha'] for c in commits if 'selected_left' in c][0]
-    if not sha2:
-        sha2 = [c['sha'] for c in commits if 'selected_right' in c][0]
-
     diff_info = github.get_diff_info(token, owner, repo, sha1, sha2)
     differing_files = [f['filename'] for f in diff_info['files']]
 
@@ -121,13 +106,28 @@ def pull(owner, repo, number):
         'total_comment_count': path_to_comments[p] + path_to_draft_comments[p]
         } for p in differing_files]
 
+    return pr, commits, comments, linked_files
+
+
+@app.route("/pull/<owner>/<repo>/<number>")
+def pull(owner, repo, number):
+    sha1 = request.args.get('sha1', None)
+    sha2 = request.args.get('sha2', None)
+    token = session['token']
+
+    pr, commits, comments, differing_files = _get_pr_info(session, owner, repo, number, sha1=sha1, sha2=sha2)
+    if not sha1:
+        sha1 = [c['sha'] for c in commits if 'selected_left' in c][0]
+    if not sha2:
+        sha2 = [c['sha'] for c in commits if 'selected_right' in c][0]
+
     return render_template('pull_request.html',
                            logged_in_user=session['login'],
                            owner=owner, repo=repo,
                            commits=commits,
                            pull_request=pr,
                            comments=comments,
-                           differing_files=linked_files)
+                           differing_files=differing_files)
 
 
 @app.route("/pull/<owner>/<repo>/<number>/diff")
@@ -139,13 +139,10 @@ def file_diff(owner, repo, number):
         return "Incomplete request (need path, sha1, sha2)"
 
     token = session['token']
-    pr, commits, comments = _get_pr_info(session, owner, repo, number, path=path, sha1=sha1, sha2=sha2)
-
-    diff_info = github.get_diff_info(token, owner, repo, sha1, sha2)
-    differing_files = [f['filename'] for f in diff_info['files']]
+    pr, commits, comments, differing_files = _get_pr_info(session, owner, repo, number, path=path, sha1=sha1, sha2=sha2)
 
     unified_diff = github.get_file_diff(token, owner, repo, path, sha1, sha2)
-    if not unified_diff or not diff_info:
+    if not unified_diff:
         return "Unable to get diff for %s..%s" % (sha1, sha2)
 
     # github excludes the first four header lines of "git diff"
@@ -157,23 +154,15 @@ def file_diff(owner, repo, number):
     before = github.get_file_at_ref(token, owner, repo, path, sha1) or ''
     after = github.get_file_at_ref(token, owner, repo, path, sha2) or ''
 
-    def diff_url(path):
-        return (url_for('file_diff', owner=owner, repo=repo, number=number) +
-                '?path=' + urllib.quote(path) +
-                '&sha1=' + urllib.quote(sha1) + '&sha2=' + urllib.quote(sha2))
-
-    linked_files = [{'path':p, 'link': diff_url(p)}
-                    for p in differing_files]
-
     if path in differing_files:
         file_idx = differing_files.index(path)
-        prev_file = linked_files[file_idx - 1] if file_idx > 0 else None
-        next_file = linked_files[file_idx + 1] if file_idx < len(linked_files) - 1 else None
+        prev_file = differing_files[file_idx - 1] if file_idx > 0 else None
+        next_file = differing_files[file_idx + 1] if file_idx < len(differing_files) - 1 else None
     else:
         # The current file is not part of this diff.
         # Just do something sensible.
         prev_file = None
-        next_file = linked_files[0] if len(linked_files) > 0 else None
+        next_file = differing_files[0] if len(differing_files) > 0 else None
 
     pull_request_url = url_for('pull', owner=owner, repo=repo, number=number) + '?sha1=%s&sha2=%s' % (sha1, sha2)
 
@@ -185,7 +174,7 @@ def file_diff(owner, repo, number):
                            comments=comments,
                            path=path, sha1=sha1, sha2=sha2,
                            before_contents=before, after_contents=after,
-                           differing_files=linked_files,
+                           differing_files=differing_files,
                            prev_file=prev_file, next_file=next_file,
                            github_diff=github_diff,
                            pull_request_url=pull_request_url)
