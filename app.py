@@ -18,27 +18,27 @@ app = Flask(__name__)
 
 db = comment_db.CommentDb()
 
-@app.route("/repo/<user>/<repo>")
-def repo(user, repo):
+@app.route("/repo/<owner>/<repo>")
+def repo(owner, repo):
     token = session['token']
-    pull_requests = github.get_pull_requests(token, user, repo)
+    pull_requests = github.get_pull_requests(token, owner, repo)
 
     for pr in pull_requests:
-        pr['url'] = url_for('pull', user=user, repo=repo, number=pr['number'])
+        pr['url'] = url_for('pull', owner=owner, repo=repo, number=pr['number'])
 
     return render_template('repo.html',
                            logged_in_user=session['login'],
                            pull_requests=pull_requests)
 
 
-def _get_pr_info(session, user, repo, number, path=None):
+def _get_pr_info(session, owner, repo, number, path=None):
     token = session['token']
     login = session['login']
-    commits = github.get_pull_request_commits(token, user, repo, number)
-    pr = github.get_pull_request(token, user, repo, number)
+    commits = github.get_pull_request_commits(token, owner, repo, number)
+    pr = github.get_pull_request(token, owner, repo, number)
 
-    comments = github.get_pull_request_comments(token, user, repo, number)
-    draft_comments = db.get_draft_comments(login, user, repo, number)
+    comments = github.get_pull_request_comments(token, owner, repo, number)
+    draft_comments = db.get_draft_comments(login, owner, repo, number)
 
     commit_to_comments = defaultdict(int)
     commit_to_draft_comments = defaultdict(int)
@@ -50,7 +50,7 @@ def _get_pr_info(session, user, repo, number, path=None):
         commit_to_draft_comments[comment['original_commit_id']] += 1
         comments['diff_level'].append(db.githubify_comment(comment))
 
-    github_comments.add_line_numbers_to_comments(token, user, repo, pr['base']['sha'], comments['diff_level'])
+    github_comments.add_line_numbers_to_comments(token, owner, repo, pr['base']['sha'], comments['diff_level'])
 
     commits.reverse()
     # Add an entry for the base commit.
@@ -75,20 +75,20 @@ def _get_pr_info(session, user, repo, number, path=None):
     return pr, commits, comments
 
 
-@app.route("/pull/<user>/<repo>/<number>")
-def pull(user, repo, number):
-    pr, commits, comments = _get_pr_info(session, user, repo, number)
+@app.route("/pull/<owner>/<repo>/<number>")
+def pull(owner, repo, number):
+    pr, commits, comments = _get_pr_info(session, owner, repo, number)
 
     return render_template('pull_request.html',
                            logged_in_user=session['login'],
-                           user=user, repo=repo,
+                           owner=owner, repo=repo,
                            commits=commits,
                            pull_request=pr,
                            comments=comments)
 
 
-@app.route("/pull/<user>/<repo>/<number>/diff")
-def file_diff(user, repo, number):
+@app.route("/pull/<owner>/<repo>/<number>/diff")
+def file_diff(owner, repo, number):
     path = request.args.get('path', '')
     sha1 = request.args.get('sha1', '')
     sha2 = request.args.get('sha2', '')
@@ -96,11 +96,11 @@ def file_diff(user, repo, number):
         return "Incomplete request (need path, sha1, sha2)"
 
     token = session['token']
-    pr, commits, comments = _get_pr_info(session, user, repo, number, path)
+    pr, commits, comments = _get_pr_info(session, owner, repo, number, path)
 
     # github excludes the first four header lines of "git diff"
-    diff_info = github.get_diff_info(token, user, repo, sha1, sha2)
-    unified_diff = github.get_file_diff(token, user, repo, path, sha1, sha2)
+    diff_info = github.get_diff_info(token, owner, repo, sha1, sha2)
+    unified_diff = github.get_file_diff(token, owner, repo, path, sha1, sha2)
     if not unified_diff or not diff_info:
         return "Unable to get diff for %s..%s" % (sha1, sha2)
 
@@ -110,11 +110,11 @@ def file_diff(user, repo, number):
     github_comments.add_in_response_to(pr, comments['diff_level'])
 
     differing_files = [f['filename'] for f in diff_info['files']]
-    before = github.get_file_at_ref(token, user, repo, path, sha1) or ''
-    after = github.get_file_at_ref(token, user, repo, path, sha2) or ''
+    before = github.get_file_at_ref(token, owner, repo, path, sha1) or ''
+    after = github.get_file_at_ref(token, owner, repo, path, sha2) or ''
 
     def diff_url(path):
-        return (url_for('file_diff', user=user, repo=repo, number=number) +
+        return (url_for('file_diff', owner=owner, repo=repo, number=number) +
                 '?path=' + urllib.quote(path) +
                 '&sha1=' + urllib.quote(sha1) + '&sha2=' + urllib.quote(sha2))
 
@@ -131,11 +131,11 @@ def file_diff(user, repo, number):
         prev_file = None
         next_file = linked_files[0] if len(linked_files) > 0 else None
 
-    pull_request_url = url_for('pull', user=user, repo=repo, number=number)
+    pull_request_url = url_for('pull', owner=owner, repo=repo, number=number)
 
     return render_template('file_diff.html',
                            logged_in_user=session['login'],
-                           user=user, repo=repo,
+                           owner=owner, repo=repo,
                            pull_request=pr,
                            commits=commits,
                            comments=comments,
@@ -151,14 +151,14 @@ def file_diff(user, repo, number):
 @app.route("/diff", methods=["GET", "POST"])
 def diff():
     token = session['token']
-    user = request.args.get('user', '')
+    owner = request.args.get('owner', '')
     repo = request.args.get('repo', '')
     sha1 = request.args.get('sha1', '')
     sha2 = request.args.get('sha2', '')
     if not (repo and sha1 and sha2):
         return "Incomplete request (need repo, sha1, sha2)"
 
-    diff_info = github.get_diff_info(token, user, repo, sha1, sha2)
+    diff_info = github.get_diff_info(token, owner, repo, sha1, sha2)
     if not diff_info:
         return "Unable to get diff for %s..%s" % (sha1, sha2)
 
@@ -266,7 +266,7 @@ def publish_draft_comments():
             return "Unable to publish comment: %s" % new_top_level
 
     github.expire_cache_for_pull_request(owner, repo, pull_number)
-    return redirect(url_for('pull', user=owner, repo=repo, number=pull_number))
+    return redirect(url_for('pull', owner=owner, repo=repo, number=pull_number))
 
 
 @app.route("/discard_draft_comment", methods=['POST'])

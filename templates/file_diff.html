@@ -59,7 +59,7 @@ var afterContents = {{after_contents|tojson|safe}};
 var sha1 = {{sha1|tojson|safe}};
 var sha2 = {{sha2|tojson|safe}};
 
-var user = {{user|tojson}};
+var owner = {{owner|tojson}};
 var repo = {{repo|tojson}};
 var pr_number = {{pull_request.number|tojson}};
 var updated_at = {{pull_request.updated_at|tojson}};
@@ -178,7 +178,7 @@ $(function() {
         type: 'POST',
         url: '/save_draft',
         data: {
-          owner: {{user|tojson|safe}},
+          owner: {{owner|tojson|safe}},
           repo: {{repo|tojson|safe}},
           pull_number: {{pull_request.number}},
           path: {{path|tojson|safe}},
@@ -208,7 +208,7 @@ $(function() {
   // Format descriptions with markdown.
   $('.description').html(new Showdown.converter().makeHtml({{pull_request.body|tojson|safe}}));
 
-  checkForUpdates(user, repo, pr_number, updated_at);
+  checkForUpdates(owner, repo, pr_number, updated_at);
 });
 </script>
 </body>
