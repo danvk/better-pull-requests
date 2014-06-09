@@ -12,13 +12,16 @@
 {% include 'commit_list.html' %}
 
 <h2>Files Changed</h2>
-<div id="files-changed"></div>
-<div id="changed-file-template" class="changed-file" style="display:none">
-  <a href=""></a>
-  <span class="comments" style="display:none">(
-    <span class="submitted-comments"></span>
-    <span class="draft-comments"></span>
-  )</span>
+<div id="files-changed">
+{% for f in differing_files %}
+<div class="changed-file">
+  <a href="{{f.link}}">{{f.path}}</a>
+  {% if f.total_comment_count %}(
+  {% if f.comment_count %} {{ f.comment_count }} comments {% endif %}
+  {% if f.draft_comment_count %} {{ f.draft_comment_count }} drafts {% endif %}
+  ){% endif %}
+<div>
+{% endfor %}
 </div>
 
 <h2>Discussion</h2>
@@ -54,68 +57,7 @@ var pr_owner = {{pull_request.user.login|tojson}};
 var updated_at = {{pull_request.updated_at|tojson}};
 var comments = {{comments|tojson|safe}};
 
-function countComments(file, after_ref) {
-  var counts = {
-    submitted: 0,
-    drafts: 0
-  };
-  comments.diff_level.forEach(function(comment) {
-    if (comment.original_commit_id == after_ref && (!file || comment.path == file)) {
-      counts[comment.is_draft ? 'drafts' : 'submitted'] += 1;
-    }
-  });
-  counts.total = counts.submitted + counts.drafts;
-  return counts;
-}
-
-// TODO(danvk): do this for file_diff.html, too.
-// TODO(danvk): do this server-side in Jinja, not in JavaScript
-function displayDiffs(before_ref, after_ref, data) {
-  $('#files-changed').empty();
-  var diffUrlBase = '/pull/' + owner + '/' + repo + '/' + pr_number + '/diff';
-  data.files.forEach(function(file) {
-    var diffUrl = diffUrlBase +
-        '?path=' + escape(file) +
-        '&sha1=' + escape(before_ref) +
-        '&sha2=' + escape(after_ref);
-    var $fileDiv = $('#changed-file-template').clone().removeAttr('id').show();
-    $fileDiv.find('a').attr('href', diffUrl).text(file);
-    var comments = countComments(file, after_ref);
-    if (comments.total) {
-      $fileDiv.find('.comments').show();
-    }
-    if (comments.submitted) {
-      $fileDiv.find('.submitted-comments').text(comments.submitted + ' comments');
-    }
-    if (comments.drafts) {
-      $fileDiv.find('.draft-comments').text(comments.drafts + ' drafts');
-    }
-
-    $('#files-changed').append($fileDiv);
-  });
-}
-
 $(function() {
-  $('#show-diff').click(function(e) {
-    $('#files-changed').html('&hellip;');
-
-    var sha1 = $('input[name="sha1"]:checked').val(),
-        sha2 = $('input[name="sha2"]:checked').val();
-    $.getJSON('/diff', { owner: owner, repo: repo, sha1: sha1, sha2: sha2 })
-    .success(function(data) {
-      displayDiffs(sha1, sha2, data);
-    })
-    .error(function(err) {
-      $('#files-changed').text(JSON.stringify(err));
-    });
-    e.preventDefault();
-  });
-
-  // Default view
-  $('input[name=sha1]:last').click();
-  $('input[name=sha2]:first').click();
-  $('#show-diff').click();
-
   // Top-level comments
   comments.top_level.forEach(function(comment) {
     $('#top-level-comments').append(renderComment(comment));
@@ -138,6 +80,10 @@ $(function() {
 
   checkForUpdates(owner, repo, pr_number, updated_at);
 });
+
+  $('#show-diff').on('click', function() {
+    $(this).closest('form').submit();
+  });
 </script>
 
 </body>

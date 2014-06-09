@@ -31,11 +31,16 @@ def repo(owner, repo):
                            pull_requests=pull_requests)
 
 
-def _get_pr_info(session, owner, repo, number, path=None):
+def _get_pr_info(session, owner, repo, number, sha1=None, sha2=None, path=None):
     token = session['token']
     login = session['login']
     commits = github.get_pull_request_commits(token, owner, repo, number)
     pr = github.get_pull_request(token, owner, repo, number)
+
+    if not sha1:
+        sha1 = pr['base']['sha']
+    if not sha2:
+        sha2 = commits[-1]['sha']
 
     comments = github.get_pull_request_comments(token, owner, repo, number)
     draft_comments = db.get_draft_comments(login, owner, repo, number)
@@ -65,26 +70,64 @@ def _get_pr_info(session, owner, repo, number, path=None):
 
     for commit in commits:
         sha = commit['sha']
-        commit['commit']['short_message'] = re.sub(r'[\n\r].*', '', commit['commit']['message'])
         commit.update({
+            'short_message': re.sub(r'[\n\r].*', '', commit['commit']['message']),
             'comment_count': commit_to_comments[sha],
             'draft_comment_count': commit_to_draft_comments[sha],
             'total_comment_count': commit_to_comments[sha] + commit_to_draft_comments[sha]
         })
+        if sha1 == sha:
+            commit['selected_left'] = True
+        if sha2 == sha:
+            commit['selected_right'] = True
 
     return pr, commits, comments
 
 
 @app.route("/pull/<owner>/<repo>/<number>")
 def pull(owner, repo, number):
-    pr, commits, comments = _get_pr_info(session, owner, repo, number)
+    sha1 = request.args.get('sha1', None)
+    sha2 = request.args.get('sha2', None)
+    token = session['token']
+
+    pr, commits, comments = _get_pr_info(session, owner, repo, number, sha1=sha1, sha2=sha2)
+    if not sha1:
+        sha1 = [c['sha'] for c in commits if 'selected_left' in c][0]
+    if not sha2:
+        sha2 = [c['sha'] for c in commits if 'selected_right' in c][0]
+
+    diff_info = github.get_diff_info(token, owner, repo, sha1, sha2)
+    differing_files = [f['filename'] for f in diff_info['files']]
+
+    path_to_comments = defaultdict(int)
+    path_to_draft_comments = defaultdict(int)
+    for comment in comments['diff_level']:
+        path = comment.get('path')
+        if comment.get('is_draft'):
+            path_to_draft_comments[path] += 1
+        else:
+            path_to_comments[path] += 1
+
+    def diff_url(path):
+        return (url_for('file_diff', owner=owner, repo=repo, number=number) +
+                '?path=' + urllib.quote(path) +
+                '&sha1=' + urllib.quote(sha1) + '&sha2=' + urllib.quote(sha2))
+
+    linked_files = [{
+        'path': p,
+        'link': diff_url(p),
+        'comment_count': path_to_comments[p],
+        'draft_comment_count': path_to_draft_comments[p],
+        'total_comment_count': path_to_comments[p] + path_to_draft_comments[p]
+        } for p in differing_files]
 
     return render_template('pull_request.html',
                            logged_in_user=session['login'],
                            owner=owner, repo=repo,
                            commits=commits,
                            pull_request=pr,
-                           comments=comments)
+                           comments=comments,
+                           differing_files=linked_files)
 
 
 @app.route("/pull/<owner>/<repo>/<number>/diff")
@@ -96,20 +139,21 @@ def file_diff(owner, repo, number):
         return "Incomplete request (need path, sha1, sha2)"
 
     token = session['token']
-    pr, commits, comments = _get_pr_info(session, owner, repo, number, path)
+    pr, commits, comments = _get_pr_info(session, owner, repo, number, path=path, sha1=sha1, sha2=sha2)
 
-    # github excludes the first four header lines of "git diff"
     diff_info = github.get_diff_info(token, owner, repo, sha1, sha2)
+    differing_files = [f['filename'] for f in diff_info['files']]
+
     unified_diff = github.get_file_diff(token, owner, repo, path, sha1, sha2)
     if not unified_diff or not diff_info:
         return "Unable to get diff for %s..%s" % (sha1, sha2)
 
+    # github excludes the first four header lines of "git diff"
     github_diff = '\n'.join(unified_diff.split('\n')[4:])
 
     # TODO(danvk): only annotate comments on this file.
     github_comments.add_in_response_to(pr, comments['diff_level'])
 
-    differing_files = [f['filename'] for f in diff_info['files']]
     before = github.get_file_at_ref(token, owner, repo, path, sha1) or ''
     after = github.get_file_at_ref(token, owner, repo, path, sha2) or ''
 
@@ -131,7 +175,7 @@ def file_diff(owner, repo, number):
         prev_file = None
         next_file = linked_files[0] if len(linked_files) > 0 else None
 
-    pull_request_url = url_for('pull', owner=owner, repo=repo, number=number)
+    pull_request_url = url_for('pull', owner=owner, repo=repo, number=number) + '?sha1=%s&sha2=%s' % (sha1, sha2)
 
     return render_template('file_diff.html',
                            logged_in_user=session['login'],
@@ -145,26 +189,6 @@ def file_diff(owner, repo, number):
                            prev_file=prev_file, next_file=next_file,
                            github_diff=github_diff,
                            pull_request_url=pull_request_url)
-
-
-# TODO(danvk): eliminate this request -- should all be done server-side
-@app.route("/diff", methods=["GET", "POST"])
-def diff():
-    token = session['token']
-    owner = request.args.get('owner', '')
-    repo = request.args.get('repo', '')
-    sha1 = request.args.get('sha1', '')
-    sha2 = request.args.get('sha2', '')
-    if not (repo and sha1 and sha2):
-        return "Incomplete request (need repo, sha1, sha2)"
-
-    diff_info = github.get_diff_info(token, owner, repo, sha1, sha2)
-    if not diff_info:
-        return "Unable to get diff for %s..%s" % (sha1, sha2)
-
-    differing_files = [f['filename'] for f in diff_info['files']]
-
-    return jsonify(files=differing_files)
 
 
 @app.route("/check_for_updates", methods=['POST'])
