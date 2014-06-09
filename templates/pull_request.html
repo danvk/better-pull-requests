@@ -46,9 +46,11 @@
 <script src="/static/pull_request.js"></script>
 
 <script type="text/javascript">
+var logged_in_user = {{logged_in_user|tojson}};
 var user = {{user|tojson}};
 var repo = {{repo|tojson}};
 var pr_number = {{pull_request.number|tojson}};
+var pr_owner = {{pull_request.user.login|tojson}};
 var updated_at = {{pull_request.updated_at|tojson}};
 var comments = {{comments|tojson|safe}};
 

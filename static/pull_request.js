@@ -179,6 +179,8 @@ function findDomElementForPosition(diffEl, parsedPosition) {
 function renderComment(comment) {
   var $div = $('#comment-template').clone().removeAttr('id').show();
 
+  $div.data('id', comment.id);
+
   $div.find('.user').text(comment.user.login);
   $div.find('.updated_at').text(comment.updated_at);
   if (comment.html_url) {
@@ -191,6 +193,15 @@ function renderComment(comment) {
   $div.addClass(comment.is_draft ? 'draft' : 'published');
   if ('is_addressed' in comment) {
     $div.addClass(comment['is_addressed'] ? 'addressed' : 'unaddressed');
+  }
+  if (comment.user.login != logged_in_user) {
+    $div.find('.reply').show();
+  }
+  if (logged_in_user == pr_owner && !comment.is_addressed) {
+    $div.find('.done-ack-links').show();
+  }
+  if (comment.is_draft) {
+    $div.find('.discard').show();
   }
   return $div.get(0);
 }
@@ -213,3 +224,28 @@ function checkForUpdates(owner, repo, pull_number, updated_at) {
     $('#refresh-update-available').show();
   });
 }
+
+$(function() {
+  $(document).on('click', '.draft a.discard', function(e) {
+    var $comment = $(this).parent('.inline-comment');
+    var id = $comment.data('id');
+    if (!id) {
+      console.warn("Unable to get ID for comment while trying to discard.");
+      return;
+    }
+
+    $.post('/discard_draft_comment', { 'id': id })
+    .success(function(response) {
+      if (response == "OK") {
+        $comment.remove();
+      } else {
+        console.warn("Unable to discard comment -- backend error", response);
+      }
+    })
+    .fail(function(err) {
+      console.warn("Unable to discard comment -- backend error", err);
+    });
+
+    e.preventDefault();
+  });
+});

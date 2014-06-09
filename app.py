@@ -26,7 +26,9 @@ def repo(user, repo):
     for pr in pull_requests:
         pr['url'] = url_for('pull', user=user, repo=repo, number=pr['number'])
 
-    return render_template('repo.html', pull_requests=pull_requests)
+    return render_template('repo.html',
+                           logged_in_user=session['login'],
+                           pull_requests=pull_requests)
 
 
 def _get_pr_info(session, user, repo, number, path=None):
@@ -78,6 +80,7 @@ def pull(user, repo, number):
     pr, commits, comments = _get_pr_info(session, user, repo, number)
 
     return render_template('pull_request.html',
+                           logged_in_user=session['login'],
                            user=user, repo=repo,
                            commits=commits,
                            pull_request=pr,
@@ -131,6 +134,7 @@ def file_diff(user, repo, number):
     pull_request_url = url_for('pull', user=user, repo=repo, number=number)
 
     return render_template('file_diff.html',
+                           logged_in_user=session['login'],
                            user=user, repo=repo,
                            pull_request=pr,
                            commits=commits,
@@ -265,6 +269,18 @@ def publish_draft_comments():
 
     github.expire_cache_for_pull_request(owner, repo, pull_number)
     return redirect(url_for('pull', user=owner, repo=repo, number=pull_number))
+
+
+@app.route("/discard_draft_comment", methods=['POST'])
+def discard_draft_comment():
+    comment_id = int(request.form['id'])
+    if not comment_id:
+        return "Missing 'id' parameter"
+
+    if db.delete_draft_comments([comment_id]):
+        return "OK"
+    else:
+        return "Error"
 
 
 @app.route("/oauth_callback")

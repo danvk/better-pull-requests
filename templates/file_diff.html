@@ -50,6 +50,9 @@
 <script src="/static/pull_request.js"></script>
 
 <script type="text/javascript">
+var logged_in_user = {{logged_in_user|tojson}};
+var pr_owner = {{pull_request.user.login|tojson}};
+
 var beforeContents = {{before_contents|tojson|safe}};
 var afterContents = {{after_contents|tojson|safe}};
 

@@ -15,7 +15,6 @@ x Consolidate draft / published comment transformation code.
 
 User-facing:
 - Add support for "reply_to"-style comments.
-- Add a "Discard" button for draft comments
 - Hide character-by-character diffs if they're too large? (mimic gerrit)
 - When there's no diff, show "no diff", rather than the entire file on both sides.
 - Redirect to OAuth flow whenever it's required, and redirect back to the right place.
@@ -39,3 +38,4 @@ x Render the Pull Request description with Markdown.
 x Add ability to write new top-level comments.
 x Add a way to bust the github API cache
 x Classify comments as addressed/not addressed
+x Add a "Discard" button for draft comments
