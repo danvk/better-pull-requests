@@ -240,9 +240,22 @@ function createCommentBox() {
       .get(0);
 }
 
+function addReplyBox(commentEl) {
+  var $comment = $(commentEl);
+  var id = $comment.data('id');
+  var $box = $(createCommentBox())
+      .data({
+          'inReplyTo': id,
+          'lineNumber': $comment.data('lineNumber'),
+          'onLeft': $comment.data('onLeft')
+      });
+  $comment.after($box);
+  return $box.get(0);
+}
+
 $(function() {
   $(document).on('click', '.draft a.discard', function(e) {
-    var $comment = $(this).parent('.inline-comment');
+    var $comment = $(this).closest('.inline-comment');
     var id = $comment.data('id');
 
     $.post('/discard_draft_comment', { 'id': id })
@@ -261,18 +274,22 @@ $(function() {
   })
 
   .on('click', '.reply', function(e) {
-    var $comment = $(this).parent('.inline-comment');
-    var id = $comment.data('id');
-    var $box = $(createCommentBox())
-        .data({
-            'inReplyTo': id,
-            'lineNumber': $comment.data('lineNumber'),
-            'onLeft': $comment.data('onLeft')
-        });
-    $comment.after($box);
+    var $comment = $(this).closest('.inline-comment');
+    var $box = $(addReplyBox($comment.get(0)));
     $box.find('textarea').focus();
     e.preventDefault();
-  });
+  })
 
+  .on('click', '.done, .ack', function(e) {
+    var msg = $(this).hasClass('done') ? 'Done' :
+              $(this).hasClass('ack') ? 'Acknowledged' : '';
+    if (!msg) return;
+
+    var $comment = $(this).closest('.inline-comment');
+    var $box = $(addReplyBox($comment.get(0)));
+    $box.find('textarea').text(msg);
+    $box.find('.save-comment').click();
+    e.preventDefault();
+  });
 
 });
