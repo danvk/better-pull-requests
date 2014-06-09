@@ -11,19 +11,6 @@
 
 {% include 'commit_list.html' %}
 
-<h2>{{path}}</h2>
-<div id="thediff"></div>
-
-<div id="prev-next">
-{% if prev_file %}
-<a class="prev" href="{{prev_file.link}}">&larr; {{prev_file.path}}</a>
-{% endif %}
-&nbsp;
-{% if next_file %}
-<a class="next" href="{{next_file.link}}">{{next_file.path}} &rarr;</a>
-{% endif %}
-</div>
-
 <h2>Files Changed</h2>
 <div id="files-changed">
 {% for differing_file in differing_files %}
@@ -38,6 +25,21 @@
 {% endif %}
 {% endfor %}
 </div>
+
+{% if prev_file or next_file %}
+<div id="prev-next">
+{% if prev_file %}
+<a class="prev" href="{{prev_file.link}}">&larr; {{prev_file.path}}</a>
+{% endif %}
+&nbsp;
+{% if next_file %}
+<a class="next" href="{{next_file.link}}">{{next_file.path}} &rarr;</a>
+{% endif %}
+</div>
+{% endif %}
+
+<h2>{{path}}</h2>
+<div id="thediff"></div>
 
 {% include 'comment_templates.html' %}
 
