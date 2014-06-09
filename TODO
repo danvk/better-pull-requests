@@ -16,7 +16,6 @@ x Change "user" to "owner" in github.py and in templates
 User-facing:
 - Embolden unreplied comment counts everywhere
 - Make sha pair sticky on /pull pages
-- Hide character-by-character diffs if they're too large? (mimic gerrit)
 - When there's no diff, show "no diff", rather than the entire file on both sides.
 - Redirect to OAuth flow whenever it's required, and redirect back to the right place.
 - Link to where diff comments were made on /pull page
@@ -41,3 +40,4 @@ x Add a way to bust the github API cache
 x Classify comments as addressed/not addressed
 x Add a "Discard" button for draft comments
 x Add support for "reply_to"-style comments.
+x Hide character-by-character diffs if they're too large? (mimic gerrit)
