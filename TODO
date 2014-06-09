@@ -4,13 +4,14 @@ Cleanup tasks:
 - Move all the JS of pull_request.html into a JS file
 - Change "user" to "owner" in github.py and in templates
 - Consolidate shared code between pull_request.html and file_diff.html
-- Consolidate shared code between /pull and /diff handlers
-- Consolidate draft / published comment transformation code.
 - Write some tests for the Python code
 - Add a no-oauth mode
+- Do github API requests in parallel
 
 x Don't filter the returned dicts in github.py
 x Try to get rid of git.py -- it will make it easier to host this as a service.
+x Consolidate shared code between /pull and /diff handlers
+x Consolidate draft / published comment transformation code.
 
 User-facing:
 - Add support for "reply_to"-style comments.

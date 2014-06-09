@@ -29,20 +29,22 @@ def repo(user, repo):
     return render_template('repo.html', pull_requests=pull_requests)
 
 
-@app.route("/pull/<user>/<repo>/<number>")
-def pull(user, repo, number):
+def _get_pr_info(session, user, repo, number, path=None):
     token = session['token']
+    login = session['login']
     commits = github.get_pull_request_commits(token, user, repo, number)
     pr = github.get_pull_request(token, user, repo, number)
-    comments = github.get_pull_request_comments(token, user, repo, number)
 
-    draft_comments = db.get_draft_comments(session['login'], user, repo, number)
+    comments = github.get_pull_request_comments(token, user, repo, number)
+    draft_comments = db.get_draft_comments(login, user, repo, number)
 
     commit_to_comments = defaultdict(int)
-    for comment in comments['diff_level']:
-        commit_to_comments[comment['original_commit_id']] += 1
     commit_to_draft_comments = defaultdict(int)
+    for comment in comments['diff_level']:
+        if path and comment['path'] != path: continue
+        commit_to_comments[comment['original_commit_id']] += 1
     for comment in draft_comments:
+        if path and comment['path'] != path: continue
         commit_to_draft_comments[comment['original_commit_id']] += 1
         comments['diff_level'].append(db.githubify_comment(comment))
 
@@ -60,17 +62,26 @@ def pull(user, repo, number):
     })
 
     for commit in commits:
-        commit['commit']['short_message'] = re.sub(r'[\n\r].*', '', commit['commit']['message'])
-
-    for commit in commits:
         sha = commit['sha']
+        commit['commit']['short_message'] = re.sub(r'[\n\r].*', '', commit['commit']['message'])
         commit.update({
             'comment_count': commit_to_comments[sha],
             'draft_comment_count': commit_to_draft_comments[sha],
             'total_comment_count': commit_to_comments[sha] + commit_to_draft_comments[sha]
         })
 
-    return render_template('pull_request.html', commits=commits, user=user, repo=repo, pull_request=pr, comments=comments)
+    return pr, commits, comments
+
+
+@app.route("/pull/<user>/<repo>/<number>")
+def pull(user, repo, number):
+    pr, commits, comments = _get_pr_info(session, user, repo, number)
+
+    return render_template('pull_request.html',
+                           user=user, repo=repo,
+                           commits=commits,
+                           pull_request=pr,
+                           comments=comments)
 
 
 @app.route("/pull/<user>/<repo>/<number>/diff")
@@ -81,34 +92,8 @@ def file_diff(user, repo, number):
     if not (path and sha1 and sha2):
         return "Incomplete request (need path, sha1, sha2)"
 
-    # TODO(danvk): consolidate this code with the pull route
     token = session['token']
-    commits = github.get_pull_request_commits(token, user, repo, number)
-    pr = github.get_pull_request(token, user, repo, number)
-    comments = github.get_pull_request_comments(token, user, repo, number)
-    draft_comments = db.get_draft_comments(session['login'], user, repo, number)
-    for dc in draft_comments:
-        comments['diff_level'].append(db.githubify_comment(dc))
-
-    # TODO(danvk): separate out draft, non-draft comments
-    commit_to_comments = defaultdict(int)
-    for comment in comments['diff_level']:
-        commit_to_comments[comment['original_commit_id']] += 1
-
-    commits.reverse()
-    # Add an entry for the base commit.
-    commits.append({
-        'sha': pr['base']['sha'],
-        'commit': {
-            'message': '(%s)' % pr['base']['ref'],
-            'author': {'date': ''}
-        },
-        'author': {'login': ''}
-    })
-
-    for commit in commits:
-        commit['commit']['short_message'] = re.sub(r'[\n\r].*', '', commit['commit']['message'])
-
+    pr, commits, comments = _get_pr_info(session, user, repo, number, path)
 
     # github excludes the first four header lines of "git diff"
     diff_info = github.get_diff_info(token, user, repo, sha1, sha2)
@@ -119,7 +104,6 @@ def file_diff(user, repo, number):
     github_diff = '\n'.join(unified_diff.split('\n')[4:])
 
     # TODO(danvk): only annotate comments on this file.
-    github_comments.add_line_numbers_to_comments(token, user, repo, pr['base']['sha'], comments['diff_level'])
     github_comments.add_in_response_to(pr, comments['diff_level'])
 
     differing_files = [f['filename'] for f in diff_info['files']]
@@ -131,7 +115,8 @@ def file_diff(user, repo, number):
                 '?path=' + urllib.quote(path) +
                 '&sha1=' + urllib.quote(sha1) + '&sha2=' + urllib.quote(sha2))
 
-    linked_files = [{'path':p, 'link': diff_url(p)} for p in differing_files]
+    linked_files = [{'path':p, 'link': diff_url(p)}
+                    for p in differing_files]
 
     if path in differing_files:
         file_idx = differing_files.index(path)
@@ -142,10 +127,20 @@ def file_diff(user, repo, number):
         # Just do something sensible.
         prev_file = None
         next_file = linked_files[0] if len(linked_files) > 0 else None
-    
+
     pull_request_url = url_for('pull', user=user, repo=repo, number=number)
 
-    return render_template('file_diff.html', commits=commits, user=user, repo=repo, pull_request=pr, comments=comments, path=path, sha1=sha1, sha2=sha2, before_contents=before, after_contents=after, differing_files=linked_files, prev_file=prev_file, next_file=next_file, github_diff=github_diff, pull_request_url=pull_request_url)
+    return render_template('file_diff.html',
+                           user=user, repo=repo,
+                           pull_request=pr,
+                           commits=commits,
+                           comments=comments,
+                           path=path, sha1=sha1, sha2=sha2,
+                           before_contents=before, after_contents=after,
+                           differing_files=linked_files,
+                           prev_file=prev_file, next_file=next_file,
+                           github_diff=github_diff,
+                           pull_request_url=pull_request_url)
 
 
 # TODO(danvk): eliminate this request -- should all be done server-side
