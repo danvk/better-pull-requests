@@ -4,15 +4,23 @@ import urllib
 import requests
 import sys
 import re
+import os
 
 from flask import Flask, url_for, render_template, request, jsonify, session, redirect
 import github
 import github_comments
 import comment_db
 
-SECRETS = json.load(open('secrets.json'))
-CLIENT_SECRET = SECRETS['github_client_secret']
-Flask.secret_key = SECRETS['flask_secret_key']
+if os.path.exists('secrets.json'):
+    SECRETS = json.load(open('secrets.json'))
+    CLIENT_SECRET = SECRETS['github_client_secret']
+    Flask.secret_key = SECRETS['flask_secret_key']
+else:
+    sys.stderr.write('''
+You need to create a secrets.json file before running this server.
+See README.md for details.\n
+''')
+    sys.exit(1)
 
 app = Flask(__name__)
 
