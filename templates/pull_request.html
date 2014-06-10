@@ -32,7 +32,7 @@
 
 <form action="/publish_draft_comments" method="POST">
   <textarea rows=4 name="top_level_comment"></textarea>
-  <input type=hidden name=owner value="{{user}}">
+  <input type=hidden name=owner value="{{owner}}">
   <input type=hidden name=repo value="{{repo}}">
   <input type=hidden name=pull_number value="{{pull_request.number}}">
   <input type="submit" value="Publish Comments">
