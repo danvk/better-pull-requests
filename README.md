@@ -27,9 +27,9 @@ Setting Up
 
 Now visit http://localhost:5000/ and OAuth into your app.
 
-Then visit ```http://localhost:5000/repo/:owner/:repo``` to view open pull
+Then visit ```http://localhost:5000/:owner/:repo/pulls``` to view open pull
 requests for any github repo. For example, you can visit
-http://localhost:5000/repo/danvk/test-repo to see pull requests in my test repo.
+http://localhost:5000/danvk/test-repo/pulls to see pull requests in my test repo.
 
 Getting a github client secret
 ==============================

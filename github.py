@@ -53,7 +53,6 @@ def _fetch_url(token, url, extra_headers=None, bust_cache=False):
     if cached is not None and not bust_cache:
         return cached
     sys.stderr.write('Uncached request for %s\n' % url)
-    sys.stderr.write('Token=%s\n' % token)
 
     headers = {'Authorization': 'token ' + token}
     if extra_headers:
@@ -75,6 +74,9 @@ def _post_api(token, path, obj, **kwargs):
     r = requests.post(url, headers={'Authorization': 'token ' + token, 'Content-type': 'application/json'}, data=json.dumps(obj))
     if not r.ok:
         sys.stderr.write('Request for %s failed.\n' % url)
+        sys.stderr.write('%s\n' % r)
+        sys.stderr.write('%s\n' % r.text)
+        sys.stderr.write('Posted:\n%s\n' % json.dumps(obj))
         return False
 
     return r.json()
@@ -107,9 +109,13 @@ def get_pull_requests(token, owner, repo, bust_cache=False):
     return _fetch_api(token, url, bust_cache=bust_cache)
 
 
+def _pull_request_url(owner, repo, pull_number):
+    return (GITHUB_API_ROOT + '/repos/%(owner)s/%(repo)s/pulls/%(pull_number)s') % {'owner': owner, 'repo': repo, 'pull_number': pull_number}
+
+
 # caching: should check after calling
 def get_pull_request(token, owner, repo, pull_number, bust_cache=False):
-    url = (GITHUB_API_ROOT + '/repos/%(owner)s/%(repo)s/pulls/%(pull_number)s') % {'owner': owner, 'repo': repo, 'pull_number': pull_number}
+    url = _pull_request_url(owner, repo, pull_number)
     return _fetch_api(token, url, bust_cache=bust_cache)
 
 
@@ -210,8 +216,9 @@ def post_comment(token, owner, repo, pull_number, comment):
     if 'in_reply_to' in comment:
         filtered_comment['in_reply_to'] = comment['in_reply_to']
     else:
-        for field in ['commit_id', 'path', 'position']:
-            filtered_comment[field] = comment[field]
+        filtered_comment['commit_id'] = comment['original_commit_id']
+        filtered_comment['position'] = comment['original_position']
+        filtered_comment['path'] = comment['path']
 
     return _post_api(token, post_path, filtered_comment,
                      owner=owner, repo=repo, pull_number=pull_number)
@@ -226,9 +233,18 @@ def post_issue_comment(token, owner, repo, issue_number, body):
         }, owner=owner, repo=repo, issue_number=issue_number)
 
 
-def expire_cache_for_pull_request(owner, repo, pull_number):
+def _expire_urls(urls):
+    keys = [url + json.dumps(None) for url in urls]
+    cache.delete_multi(keys)
+
+
+def expire_cache_for_pull_request_children(owner, repo, pull_number):
     """Delete all non-permanent cache entries relating to this PR."""
     urls = (list(_comments_urls(owner, repo, pull_number)) +
             [_commits_url(owner, repo, pull_number)])
-    keys = [url + json.dumps(None) for url in urls]
-    cache.delete_multi(keys)
+    _expire_urls(urls)
+
+
+def expire_cache_for_pull_request(owner, repo, pull_number):
+    """Delete the Pull Request RPC itself from the cache."""
+    _expire_urls([_pull_request_url(owner, repo, pull_number)])

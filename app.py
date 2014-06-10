@@ -26,7 +26,7 @@ app = Flask(__name__)
 
 db = comment_db.CommentDb()
 
-@app.route("/repo/<owner>/<repo>")
+@app.route("/<owner>/<repo>/pulls")
 def repo(owner, repo):
     token = session['token']
     pull_requests = github.get_pull_requests(token, owner, repo)
@@ -119,7 +119,7 @@ def _get_pr_info(session, owner, repo, number, sha1=None, sha2=None, path=None):
     return pr, commits, comments, files
 
 
-@app.route("/pull/<owner>/<repo>/<number>")
+@app.route("/<owner>/<repo>/pull/<number>")
 def pull(owner, repo, number):
     sha1 = request.args.get('sha1', None)
     sha2 = request.args.get('sha2', None)
@@ -140,7 +140,7 @@ def pull(owner, repo, number):
                            files=files)
 
 
-@app.route("/pull/<owner>/<repo>/<number>/diff")
+@app.route("/<owner>/<repo>/pull/<number>/diff")
 def file_diff(owner, repo, number):
     path = request.args.get('path', '')
     sha1 = request.args.get('sha1', '')
@@ -201,12 +201,11 @@ def check_for_updates():
 
     pr = github.get_pull_request(token, owner, repo, pull_number, bust_cache=True)
 
-    sys.stderr.write('cached updated_at=%s\n         uncached=%s\n' % (updated_at, pr['updated_at']))
-
     if pr['updated_at'] <= updated_at:
         return "OK"
 
-    github.expire_cache_for_pull_request(owner, repo, pull_number)
+    # Invalidate associated RPCs: commit list, comments
+    github.expire_cache_for_pull_request_children(owner, repo, pull_number)
     return "Update"
 
 
@@ -290,6 +289,7 @@ def publish_draft_comments():
             return "Unable to publish comment: %s" % new_top_level
 
     github.expire_cache_for_pull_request(owner, repo, pull_number)
+    github.expire_cache_for_pull_request_children(owner, repo, pull_number)
     return redirect(url_for('pull', owner=owner, repo=repo, number=pull_number))
 
 
