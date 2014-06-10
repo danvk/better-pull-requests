@@ -6,4 +6,7 @@ GITHUB_CLIENT_SECRET=''
 ROOT_URI='http://localhost:5000'
 
 # Secret key used by Flask for session storage.
-# SECRET_KEY='(mash your keyboard here)'
+SECRET_KEY='(mash your keyboard here)'
+
+# Enables automatic reloading, etc.
+DEBUG=True

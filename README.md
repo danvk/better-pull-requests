@@ -22,7 +22,9 @@ Setting Up
     virtualenv env                   # make a new virtualenv named 'env'.
     source env/bin/activate          # activate the env (local pip, python).
     pip install -r requirements.txt  # install the requirements in the env.
-    $EDITOR secrets.json             # See below
+    cp config.template app.cfg
+    $EDITOR app.cfg                  # See notes below
+    export BETTER_PR_CONFIG=app.cfg
     python app.py
 
 Now visit http://localhost:5000/ and OAuth into your app.
@@ -41,10 +43,6 @@ github. Request the ```repo``` and ```user``` scopes and set the callback URL to
 ```http://localhost:5000/oauth_callback```. The other fields can be anything you
 like.
 
-Once you've registered your app, you need to put its "Client Secret" in the
-secrets.json file. It should look something like this:
-
-
-    {
-      "github_client_secret": "0123456789abcdef (40 digit hex client_secret)",
-    }
+Once you've registered your app, you need to put its ID and secret into a
+configuration. The provided config.template file shows you what this should
+look like.
