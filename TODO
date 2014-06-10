@@ -14,6 +14,7 @@ x Change "user" to "owner" in github.py and in templates
 x Move more processing out of JS and into Python (eliminate /diff XHR)
 
 User-facing:
+- Copy github URL pattern precisely (/:owner/:repo/pulls[/:number])
 - Embolden unreplied comment counts everywhere
 - When there's no diff, show "no diff", rather than the entire file on both sides.
 - Redirect to OAuth flow whenever it's required, and redirect back to the right place.

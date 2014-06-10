@@ -14,7 +14,7 @@ import comment_db
 if os.path.exists('secrets.json'):
     SECRETS = json.load(open('secrets.json'))
     CLIENT_SECRET = SECRETS['github_client_secret']
-    Flask.secret_key = SECRETS['flask_secret_key']
+    Flask.secret_key = CLIENT_SECRET  # no need for multiple secrets
 else:
     sys.stderr.write('''
 You need to create a secrets.json file before running this server.
