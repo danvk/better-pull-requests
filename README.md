@@ -10,6 +10,12 @@ The key features this adds on top of github's standard Pull Request UI are:
 
 It also includes nice to haves like syntax coloring and keyboard shortcuts.
 
+This tool is implemented using the github API and is designed to interoperate
+with the code review tools on github.com. It's possible to do a code review
+where one of the parties uses github's tools and the other does not. This also
+lets you continue to use other tools built around github's Pull Requests, e.g.
+Jenkins.
+
 Setting Up
 ==========
 
