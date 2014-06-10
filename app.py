@@ -11,25 +11,22 @@ import github
 import github_comments
 import comment_db
 
-if os.path.exists('secrets.json'):
-    SECRETS = json.load(open('secrets.json'))
-    CLIENT_SECRET = SECRETS['github_client_secret']
-    Flask.secret_key = CLIENT_SECRET  # no need for multiple secrets
-else:
+app = Flask(__name__)
+app.config.from_envvar('BETTER_PR_CONFIG')
+
+if not (app.config['GITHUB_CLIENT_SECRET'] and app.config['GITHUB_CLIENT_ID'] and app.config['ROOT_URI']):
     sys.stderr.write('''
-You need to create a secrets.json file before running this server.
+You need to fill out a config file before running this server.
 See README.md for details.\n
 ''')
     sys.exit(1)
-
-app = Flask(__name__)
 
 db = comment_db.CommentDb()
 
 @app.route("/<owner>/<repo>/pulls")
 def repo(owner, repo):
     token = session['token']
-    pull_requests = github.get_pull_requests(token, owner, repo)
+    pull_requests = github.get_pull_requests(token, owner, repo, bust_cache=True)
 
     for pr in pull_requests:
         pr['url'] = url_for('pull', owner=owner, repo=repo, number=pr['number'])
@@ -314,10 +311,10 @@ def oauth_callback():
 
     # Now we POST to github.com/login/oauth/access_token to get an access token.
     response = requests.post('https://github.com/login/oauth/access_token', data={
-        'client_id': 'a9c607c208c3155a26dd',
-        'client_secret': CLIENT_SECRET,
+        'client_id': app.config['GITHUB_CLIENT_ID'],
+        'client_secret': app.config['GITHUB_CLIENT_SECRET'],
         'code': code,
-        'redirect_uri': 'http://localhost:5000/oauth_callback'
+        'redirect_uri': app.config['ROOT_URI'] + '/oauth_callback'
         }, headers={'Accept': 'application/json'})
 
     if response.json() and 'access_token' in response.json():

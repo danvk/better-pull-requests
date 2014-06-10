@@ -1,4 +1,4 @@
 env
 .DS_Store
 *.pyc
-secrets.json
+*.cfg

@@ -1,0 +1,9 @@
+# These must match the values for your app as you registered it on github.
+# Visit https://github.com/settings/applications/new to create a new
+# application. This project requires repo and user scopes.
+GITHUB_CLIENT_ID=''
+GITHUB_CLIENT_SECRET=''
+ROOT_URI='http://localhost:5000'
+
+# Secret key used by Flask for session storage.
+# SECRET_KEY='(mash your keyboard here)'
