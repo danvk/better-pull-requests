@@ -19,6 +19,15 @@ Setting Up
     $EDITOR secrets.json             # See below
     python app.py
 
+Now visit http://localhost:5000/ and OAuth into your app.
+
+Then visit ```http://localhost:5000/repo/:owner/:repo``` to view open pull
+requests for any github repo. For example, you can visit
+http://localhost:5000/repo/danvk/test-repo to see pull requests in my test repo.
+
+Getting a github client secret
+==============================
+
 OAuthing into github is essential for this server, so it requires you to set up
 an app on github before you run. This is easy to do! Just go
 [here](https://github.com/settings/applications/new) and fill out the form on
