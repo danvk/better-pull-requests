@@ -333,7 +333,13 @@ def oauth_callback():
 
 @app.route("/")
 def hello():
-    return render_template('index.html')
+    url = 'https://github.com/login/oauth/authorize?' + urllib.urlencode({
+        'client_id': app.config['GITHUB_CLIENT_ID'],
+        'redirect_uri': app.config['ROOT_URI'] + '/oauth_callback',
+        'scope': 'repo,user',
+        'state': 1234  # TODO(danvk): really set this
+        })
+    return render_template('index.html', oauthurl=url)
 
 
 if __name__ == "__main__":
