@@ -3,6 +3,8 @@ import github_comments
 import unittest
 from mock import patch, MagicMock
 
+_ = ''  # a "don't care" value
+
 class GithubCommentsTestCase(unittest.TestCase):
 
     def setUp(self):
@@ -17,12 +19,18 @@ class GithubCommentsTestCase(unittest.TestCase):
     def test_lineNumberToDiffPositionAndHunkCreation(self):
         mock = MagicMock(return_value=open('testdata/file-creation.diff.txt').read())
         with patch('github.get_file_diff', mock):
-            position, diff_hunk = github_comments.lineNumberToDiffPositionAndHunk('token', 'owner', 'repo', 'base_sha', 'path', 'commit_id', 58, False)
+            position, diff_hunk = github_comments.lineNumberToDiffPositionAndHunk(
+                    _, _, _, _, _, _, 58, False)
+            self.assertEquals(58, position)
+            self.assertEquals('@@ -0,0 +1,59 @@', diff_hunk.split('\n')[0])
 
     def test_lineNumberToDiffPositionAndHunkSmallDiff(self):
         mock = MagicMock(return_value=open('testdata/small-inline.diff.txt').read())
         with patch('github.get_file_diff', mock):
-            position, diff_hunk = github_comments.lineNumberToDiffPositionAndHunk('token', 'owner', 'repo', 'base_sha', 'path', 'commit_id', 33, False)
+            position, diff_hunk = github_comments.lineNumberToDiffPositionAndHunk(
+                    _, _, _, _, _, _, 33, False)
+            self.assertEquals(4, position)
+            self.assertEquals('@@ -30,6 +30,7 @@', diff_hunk.split('\n')[0])
 
 
 

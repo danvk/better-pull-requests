@@ -52,18 +52,17 @@ def lineNumberToDiffPositionAndHunk(token, owner, repo, base_sha, path, commit_i
         sys.stderr.write('Unable to get diff\n')
         return False
 
-    left_line_no = -1
-    right_line_no = -1
-    hunk_start = -1
+    left_line_no = None
+    right_line_no = None
+    hunk_start = None
     for position, diff_line in enumerate(diff_lines):
         m = DIFF_HUNK_HEADER_RE.match(diff_line)
         if m:
             left_line_no = int(m.group(1)) - 1
             right_line_no = int(m.group(2)) - 1
-            sys.stderr.write('%d / %d\n' % (left_line_no, right_line_no))
             hunk_start = position
             continue
-        assert left_line_no >= 0 and right_line_no >= 0, ('%s, %s' % (position, diff_lines))
+        assert left_line_no != None and right_line_no != None, ('%s, %s' % (position, diff_lines))
 
         if len(diff_line) > 0:
             sign = diff_line[0]
