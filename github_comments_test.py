@@ -33,6 +33,5 @@ class GithubCommentsTestCase(unittest.TestCase):
             self.assertEquals('@@ -30,6 +30,7 @@', diff_hunk.split('\n')[0])
 
 
-
 if __name__ == '__main__':
     unittest.main()

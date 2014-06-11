@@ -17,7 +17,6 @@ def _get_github_diff_lines(token, owner, repo, path, sha1, sha2):
     diff = github.get_file_diff(token, owner, repo, path, sha1, sha2)
     if not diff:
         return False
-    open('/tmp/diff.txt', 'wb').write(diff)
 
     # The first several lines are headers which github ignores in indexing.
     diff_lines = diff.split('\n')
