@@ -29,13 +29,17 @@ if app.config.get('LOG_FILE'):
     file_handler = logging.FileHandler(app.config['LOG_FILE'])
     file_handler.setLevel(logging.INFO)
     app.logger.addHandler(file_handler)
+    log = logging.getLogger('werkzeug')
+    log.setLevel(logging.DEBUG)
+    log.addHandler(file_handler)
 else:
     handler = logging.StreamHandler()
     handler.setLevel(logging.DEBUG)
     app.logger.addHandler(handler)
+    log = logging.getLogger('werkzeug')
+    log.setLevel(logging.DEBUG)
+    #log.addHandler(handler)
 
-
-sys.stderr.write('Debug? %s\n' % app.debug)
 
 @app.route("/<owner>/<repo>/pulls")
 def repo(owner, repo):
