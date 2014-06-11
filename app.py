@@ -8,12 +8,15 @@ import os
 import logging
 
 from flask import Flask, url_for, render_template, request, jsonify, session, redirect
+from flask_debugtoolbar import DebugToolbarExtension
+
 import github
 import github_comments
 import comment_db
 
 app = Flask(__name__)
 app.config.from_envvar('BETTER_PR_CONFIG')
+toolbar = DebugToolbarExtension(app)
 
 if not (app.config['GITHUB_CLIENT_SECRET'] and app.config['GITHUB_CLIENT_ID'] and app.config['ROOT_URI']):
     sys.stderr.write('''
