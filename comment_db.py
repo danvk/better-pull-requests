@@ -17,6 +17,7 @@ import random
 import time
 import json
 import copy
+import logging
 
 class CommentDb(object):
     """Fake DB for draft comments.
@@ -26,7 +27,7 @@ class CommentDb(object):
         self._db_file = '/tmp/better-git-pr/db.pickle'
         if os.path.exists(self._db_file):
             self._comments = cPickle.load(open(self._db_file))
-            sys.stderr.write('Loaded %d draft comments.\n' % len(self._comments))
+            logging.info('Loaded %d draft comments.', len(self._comments))
         else:
             self._comments = []
 

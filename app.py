@@ -5,6 +5,7 @@ import requests
 import sys
 import re
 import os
+import logging
 
 from flask import Flask, url_for, render_template, request, jsonify, session, redirect
 import github
@@ -22,6 +23,19 @@ See README.md for details.\n
     sys.exit(1)
 
 db = comment_db.CommentDb()
+
+if app.config.get('LOG_FILE'):
+    sys.stderr.write('Logging to a file\n')
+    file_handler = logging.FileHandler(app.config['LOG_FILE'])
+    file_handler.setLevel(logging.INFO)
+    app.logger.addHandler(file_handler)
+else:
+    handler = logging.StreamHandler()
+    handler.setLevel(logging.DEBUG)
+    app.logger.addHandler(handler)
+
+
+sys.stderr.write('Debug? %s\n' % app.debug)
 
 @app.route("/<owner>/<repo>/pulls")
 def repo(owner, repo):
@@ -278,7 +292,7 @@ def publish_draft_comments():
             return "Unable to publish comment: %s" % json.dumps(comment)
         db.delete_draft_comments([comment['id']])
 
-    sys.stderr.write('Successfully published %d comments.\n' % len(draft_comments))
+    logging.info('Successfully published %d comments', len(draft_comments))
 
     if new_top_level:
         result = github.post_issue_comment(token, owner, repo, pull_number, new_top_level)
