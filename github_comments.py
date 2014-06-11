@@ -17,9 +17,13 @@ def _get_github_diff_lines(token, owner, repo, path, sha1, sha2):
     diff = github.get_file_diff(token, owner, repo, path, sha1, sha2)
     if not diff:
         return False
+    open('/tmp/diff.txt', 'wb').write(diff)
 
-    # The first four lines are headers which github ignores in indexing.
-    return diff.split('\n')[4:]
+    # The first several lines are headers which github ignores in indexing.
+    diff_lines = diff.split('\n')
+    while diff_lines and not DIFF_HUNK_HEADER_RE.match(diff_lines[0]):
+        del diff_lines[0]
+    return diff_lines
 
 
 def add_line_number_to_comment(token, owner, repo, base_sha, comment):
@@ -56,9 +60,10 @@ def lineNumberToDiffPositionAndHunk(token, owner, repo, base_sha, path, commit_i
         if m:
             left_line_no = int(m.group(1)) - 1
             right_line_no = int(m.group(2)) - 1
+            sys.stderr.write('%d / %d\n' % (left_line_no, right_line_no))
             hunk_start = position
             continue
-        assert left_line_no >= 0 and right_line_no >= 0
+        assert left_line_no >= 0 and right_line_no >= 0, ('%s, %s' % (position, diff_lines))
 
         if len(diff_line) > 0:
             sign = diff_line[0]
