@@ -6,6 +6,14 @@
 </head>
 <body>
 <div id="refresh-update-available">There's something new! <a href="#" onclick="location.reload();">Reload</a> the page to see it.</div>
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    {% for message in messages %}
+      <p class=flash-message>{{ message }}</p>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
 <h2>{{pull_request.title}}</h2>
 <p class="description">{{pull_request.body}}</p>
 

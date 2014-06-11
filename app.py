@@ -7,14 +7,18 @@ import re
 import os
 import logging
 
-from flask import Flask, url_for, render_template, request, jsonify, session, redirect
+from flask import Flask, url_for, render_template, request, jsonify, session, redirect, flash
 from flask_debugtoolbar import DebugToolbarExtension
 
 import github
 import github_comments
 import comment_db
 
+class BasicConfig:
+    DEBUG_TB_INTERCEPT_REDIRECTS=False
+
 app = Flask(__name__)
+app.config.from_object(BasicConfig)
 app.config.from_envvar('BETTER_PR_CONFIG')
 toolbar = DebugToolbarExtension(app)
 
@@ -293,11 +297,14 @@ def publish_draft_comments():
         return "No comments to publish!"
 
     # TODO(danvk): publish comments in parallel
+    errors = []
     for comment in draft_comments:
         result = github.post_comment(token, owner, repo, pull_number, comment)
         if not result:
-            return "Unable to publish comment: %s" % json.dumps(comment)
-        db.delete_draft_comments([comment['id']])
+            errors.append(comment)
+            sys.stderr.write("Unable to publish comment: %s" % json.dumps(comment))
+        else:
+            db.delete_draft_comments([comment['id']])
 
     logging.info('Successfully published %d comments', len(draft_comments))
 
@@ -308,6 +315,8 @@ def publish_draft_comments():
 
     github.expire_cache_for_pull_request(owner, repo, pull_number)
     github.expire_cache_for_pull_request_children(owner, repo, pull_number)
+    if errors:
+        flash("Some comments could not be published. They've been left as drafts.")
     return redirect(url_for('pull', owner=owner, repo=repo, number=pull_number))
 
 

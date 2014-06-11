@@ -80,3 +80,10 @@ textarea[name=top_level_comment] {
   text-align: center;
   padding-top: 10px;
 }
+
+.flash-message {
+  background: pink;
+  font-size: x-large;
+  padding: 10px;
+  border: 1px solid gray;
+}
