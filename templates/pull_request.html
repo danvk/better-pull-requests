@@ -57,11 +57,6 @@
 
 {% include 'comment_templates.html' %}
 
-<script src="{{ url_for('static', filename='jsdifflib/difflib.js') }}"></script>
-<script src="{{ url_for('static', filename='jsdifflib/diffview.js') }}"></script>
-<script src="{{ url_for('static', filename='showdown/showdown.js') }}"></script>
-<script src="{{ url_for('static', filename='showdown/github.js') }}"></script>
-<script src="{{ url_for('static', filename='js/pull_request.js') }}"></script>
 <script type="text/javascript">
 var logged_in_user = {{logged_in_user | tojson}};
 var owner = {{owner | tojson}};
@@ -79,7 +74,7 @@ $(function() {
 
   // Draft comments
   comments['diff_level'].forEach(function(comment) {
-    if (!comment.is_draft)  return;
+    if (!comment.is_draft) return;
     var pos = parseDiffPosition(comment.diff_hunk, comment.position_in_diff_hunk);
     $('#draft-comments').append(
       $('<div>').text(comment.path + ":" + pos.lineNumber + " " + comment.diff_line),
