@@ -186,13 +186,17 @@ function renderComment(comment) {
   });
 
   $div.find('.user').text(comment.user.login);
+  if (comment.user.avatar_url) {
+    $div.find('.avatar').attr('src', comment.user.avatar_url + '?s=140');
+  }
+
   $div.find('.updated_at').text(comment.updated_at);
   if (comment.html_url) {
     $div.find('.github-link').attr('href', comment.html_url);
   } else {
     $div.find('.github-link').hide();
   }
-  $div.find('.inline-comment-body').html(
+  $div.find('.comment-body').html(
       new Showdown.converter().makeHtml(comment.body));
   $div.addClass(comment.is_draft ? 'draft' : 'published');
   if ('is_addressed' in comment) {

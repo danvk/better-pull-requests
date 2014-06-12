@@ -36,11 +36,24 @@ form.commit-list input {
 
 /* comment_templates.html */
 div.inline-comment {
+    white-space: normal;
     border: 1px solid #ddd;
     border-radius: 3px;
     background: white;
-    padding: 17px;
     margin: 13px 0;
+    font: 13px Helvetica, arial, freesans, clean, sans-serif;
+}
+
+.comment-header {
+    padding-left: 15px;
+    padding-right: 15px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    color: #777;
+    background-color: #f7f7f7;
+    border-bottom: 1px solid #eee;
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
 }
 
 div.inline-comment .user {
@@ -48,11 +61,12 @@ div.inline-comment .user {
 }
 
 div.inline-comment .added-note-on {
-    font-style: italic;
 }
 
-div.inline-comment .inline-comment-body {
-    margin: 7px;
+div.inline-comment .comment-body {
+    margin: 15px;
+    line-height: 1.7;
+    font-size: 14px;
 }
 
 div.inline-editable-comment {
@@ -67,6 +81,52 @@ div.inline-editable-comment .save-comment {
     float: right;
 }
 
+a.github-link {
+  float: right;
+}
+
+.github-icon {
+  background: url(/static/img/github-favicon.png);
+  background-size: 20px 20px;
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+}
+
+.comment-footer {
+  margin-left: 15px;
+  margin-right: 15px;
+  margin-bottom: 15px;
+}
+
+.inline-comment.draft .draft {
+  display: inline !important;
+  background: gray;
+  border-radius: 4px;
+  padding: 2px 4px;
+  font-size: 12px;
+  color: white;
+  font-weight: bold;
+}
+
 /* file_diff.html */
 div#thediff {
+}
+
+table.diff {
+  font-family: Consolas, "Liberation Mono", Menlo, Courier, monospace;
+  font-size: 12px;
+}
+
+table.diff .insert {
+  background-color: #D6FFD5;
+}
+table.diff .delete {
+  background-color: #FCD4D5;
+}
+table.diff .replace {
+  background-color: #FBE6AF;
+}
+table.diff .char-replace {
+  background-color: #FEDC87;
 }

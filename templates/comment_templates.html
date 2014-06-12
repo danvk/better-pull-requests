@@ -1,18 +1,24 @@
-<div id="editable-comment-template" class="inline-editable-comment" style="display:none;">
+<div id="editable-comment-template" class="inline-editable-comment inline-comment" style="display:none;">
   <textarea rows=4 class="form-control"></textarea>
   <button class="save-comment btn btn-success">Save</button>
   <button class="discard-comment btn btn-default">Discard</button>
 </div>
 
 <div id="comment-template" class="inline-comment" style="display:none;">
-  <div class="is_draft" style="display:none">(Draft)</div>
-  <div class="metadata"><span class="user"></span> <span class="added-note-on">added a note on</span> <span class="updated_at"></span></div>
-  <a class="github-link" href=""><span class="glyphicon glyphicon-share-alt"></span> view on github</a>
-  <div class="inline-comment-body"></div>
-  <a href="#" class="discard" style="display:none">Discard</a>
-  <a href="#" class="reply" style="display:none">Reply</a>
-  <span class="done-ack-links" style="display:none">
-    <a href="#" class="done">Done</a>
-    <a href="#" class="ack">Acknowledged</a>
-  </span>
+  <div class="comment-header">
+    <img height=20 width=20 class="avatar">
+    <span class="user"></span> <span class="added-note-on">added a note on</span> <span class="updated_at"></span>
+    <a class="github-link" href="" alt="View on github.com"><span class="github-icon"></span></a>
+  </div>
+  <div class="comment-body"></div>
+  <div class="comment-footer">
+    <span class="draft" style="display:none">Draft</span>
+    <a href="#" class="discard" style="display:none">Discard</a>
+    <a href="#" class="reply" style="display:none">Reply</a>
+    <span class="done-ack-links" style="display:none">
+      <a href="#" class="done">Done</a>
+      <a href="#" class="ack">Acknowledged</a>
+    </span>
+    <span class="unaddressed" style="display:none">Unresolved</span>
+  </div>
 </div>
