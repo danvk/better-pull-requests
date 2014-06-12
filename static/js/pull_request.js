@@ -249,7 +249,7 @@ function addReplyBox(commentEl) {
           'lineNumber': $comment.data('lineNumber'),
           'onLeft': $comment.data('onLeft')
       });
-  $comment.after($box);
+  $comment.append($box);
   return $box.get(0);
 }
 
