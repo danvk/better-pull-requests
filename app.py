@@ -75,6 +75,26 @@ def _get_pr_info(session, owner, repo, number, sha1=None, sha2=None, path=None):
     comments = github.get_pull_request_comments(token, owner, repo, number)
     draft_comments = db.get_draft_comments(login, owner, repo, number)
 
+    known_shas = set([c['sha'] for c in commits])
+    outdated_shas = set()
+    for comment in comments['diff_level']:
+        sha = comment['original_commit_id']
+        if sha not in known_shas:
+            outdated_shas.add(sha)
+
+    for sha in outdated_shas:
+        commit = github.get_commit_info(token, owner, repo, sha)
+        commits.append({
+            'commit': commit,
+            'is_outdated': True,
+            'author': {
+                'login': ''
+            },
+            'parents': commit['parents'],
+            'sha': commit['sha'],
+            'html_url': commit['html_url']
+            })
+
     commit_to_comments = defaultdict(int)
     commit_to_draft_comments = defaultdict(int)
     for comment in comments['diff_level']:
@@ -94,10 +114,14 @@ def _get_pr_info(session, owner, repo, number, sha1=None, sha2=None, path=None):
         'sha': pr['base']['sha'],
         'commit': {
             'message': '(%s)' % pr['base']['ref'],
-            'author': {'date': ''}
+            'author': {'date': ''},
+            'committer': {'date': ''}
         },
         'author': {'login': ''}
     })
+
+    commits.sort(key=lambda c: c['commit']['committer']['date'])
+    commits.reverse()
 
     for commit in commits:
         sha = commit['sha']

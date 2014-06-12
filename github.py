@@ -54,7 +54,9 @@ def _fetch_url(token, url, extra_headers=None, bust_cache=False):
         return cached
     logging.info('Uncached request for %s', url)
 
-    headers = {'Authorization': 'token ' + token}
+    headers = {}
+    if token:
+        headers.update({'Authorization': 'token ' + token})
     if extra_headers:
         headers.update(extra_headers)
     r = requests.get(url, headers=headers)
@@ -117,6 +119,12 @@ def _pull_request_url(owner, repo, pull_number):
 def get_pull_request(token, owner, repo, pull_number, bust_cache=False):
     url = _pull_request_url(owner, repo, pull_number)
     return _fetch_api(token, url, bust_cache=bust_cache)
+
+
+# caching: never expires
+def get_commit_info(token, owner, repo, sha):
+    url = (GITHUB_API_ROOT + '/repos/%(owner)s/%(repo)s/git/commits/%(sha)s') % {'owner': owner, 'repo': repo, 'sha': sha}
+    return _fetch_api(token, url)
 
 
 def _commits_url(owner, repo, pull_number):

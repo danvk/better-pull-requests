@@ -3,7 +3,10 @@
 {% for commit in commits %}
 <input name='sha1' type=radio value={{commit.sha}} {%if commit.selected_left %}checked{%endif%}>
 <input name='sha2' type=radio value={{commit.sha}} {%if commit.selected_right %}checked{%endif%}>
-{{commit.author.date}}
+{{commit.commit.committer.date}}
+{% if commit.is_outdated %}
+OUTDATED
+{% endif %}
 <span class='sha'>{{commit.sha|truncate(7, True, end='')}}</span>
 {{commit.short_message}}
 {{commit.author.login}}
