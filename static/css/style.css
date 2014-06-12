@@ -118,6 +118,13 @@ table.diff {
   font-size: 12px;
 }
 
+/* This is 80 characters in 12px Courier */
+table.diff td {
+  width: 570px;
+  min-width: 570px;
+  max-width: 570px;
+}
+
 table.diff .insert {
   background-color: #D6FFD5;
 }
