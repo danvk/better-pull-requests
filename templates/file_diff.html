@@ -1,55 +1,60 @@
-<!doctype html>
-<head>
-  <title>File Diff View</title>
-  <link rel=stylesheet href="/static/jsdifflib/diffview.css">
-  <link rel=stylesheet href="/static/pull_request.css">
-</head>
-<body>
-<div id="refresh-update-available">There's something new! <a href="#" onclick="location.reload();">Reload</a> the page to see it.</div>
+{%- extends "base.html" -%}
+
+{% block title %} File Diff View {% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="/static/jsdifflib/diffview.css">
+{% endblock %}
+
+{% block body %}
+<div id="refresh-update-available">There's something new!
+  <a href="#" onclick="location.reload();">Reload</a> the page to see it.
+</div>
+
+<div class="wrap">
+
 <h2><a href="{{pull_request_url}}">{{pull_request.title}}</a></h2>
+
 <p class="description">{{pull_request.body}}</p>
 
+<h3>Commits</h3>
 {% include 'commit_list.html' %}
 
-<h2>Files Changed</h2>
+<h3>Files Changed</h3>
 <div id="files-changed">
-{% for f in files %}
-{% if f.path == path %}
-<div class="diff-link diff-current">
-  {{f.path}}
-</div>
-{% else %}
-<div class="diff-link">
-  <a href="{{f.link}}">{{f.path}}</a>
-</div>
-{% endif %}
-{% endfor %}
+  {% for f in files %}
+    {% if f.path == path %}
+    <div class="diff-link diff-current">
+      {{f.path}}
+    </div>
+    {% else %}
+    <div class="diff-link">
+      <a href="{{f.link}}">{{f.path}}</a>
+    </div>
+    {% endif %}
+  {% endfor %}
 </div>
 
 {% if prev_file or next_file %}
 <div id="prev-next">
-{% if prev_file %}
-<a class="prev" href="{{prev_file.link}}">&larr; {{prev_file.path}}</a>
-{% endif %}
-&nbsp;
-{% if next_file %}
-<a class="next" href="{{next_file.link}}">{{next_file.path}} &rarr;</a>
-{% endif %}
+  {% if prev_file %}
+    <a class="prev" href="{{prev_file.link}}">&larr; {{prev_file.path}}</a>
+  {% endif %}
+  &nbsp;
+  {% if next_file %}
+    <a class="next" href="{{next_file.link}}">{{next_file.path}} &rarr;</a>
+  {% endif %}
 </div>
 {% endif %}
 
-<h2>{{path}}</h2>
+</div>
+
+<hr/>
+
+<h3>{{path}}</h3>
 <div id="thediff"></div>
 
 {% include 'comment_templates.html' %}
-
-<script src="/static/jquery-2.1.1.min.js"></script>
-<script src="/static/underscore-min.js"></script>
-<script src="/static/jsdifflib/difflib.js"></script>
-<script src="/static/jsdifflib/diffview.js"></script>
-<script src="/static/showdown/showdown.js"></script>
-<script src="/static/showdown/github.js"></script>
-<script src="/static/pull_request.js"></script>
 
 <script type="text/javascript">
 var logged_in_user = {{logged_in_user|tojson}};
@@ -204,5 +209,4 @@ $(function() {
   checkForUpdates(owner, repo, pr_number, updated_at);
 });
 </script>
-</body>
-</html>
+{% endblock %}

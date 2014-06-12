@@ -1,14 +1,21 @@
-<!doctype html>
-<head>
-  <title>Repo View</title>
-</head>
-<body>
-<h2>Pull Requests</h2>
-{% for pr in pull_requests %}
-<a href="{{pr.url|safe}}">{{pr.number}}</a>
-{{pr.title}}
-({{pr.user.login}})
+{%- extends "base.html" -%}
+
+{% block title %} Repository View {% endblock %}
+
+{% block body %}
+<div class="wrap">
+
+<h2>Open Pull Requests</h2>
+<ul class="list-unstyled">
+  {% for pr in pull_requests %}
+  <li>
+    <a href="{{pr.url|safe}}">[#{{pr.number}}] {{pr.title}}</a>
+    (by {{pr.user.login}})
+  </li>
+</ul>
 <br>
+
+</div>
 {% endfor %}
 
-</body>
+{% endblock %}

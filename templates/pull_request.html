@@ -1,11 +1,11 @@
-<!doctype html>
-<head>
-  <title>Pull Request View</title>
-  <link rel=stylesheet href="/static/jsdifflib/diffview.css">
-  <link rel=stylesheet href="/static/pull_request.css">
-</head>
-<body>
-<div id="refresh-update-available">There's something new! <a href="#" onclick="location.reload();">Reload</a> the page to see it.</div>
+{%- extends "base.html" -%}
+
+{% block title %} Pull Request View {% endblock %}
+
+{% block body %}
+<div id="refresh-update-available">
+  There's something new! <a href="#" onclick="location.reload();">Reload</a> the page to see it.
+</div>
 {% with messages = get_flashed_messages() %}
   {% if messages %}
     {% for message in messages %}
@@ -14,56 +14,57 @@
   {% endif %}
 {% endwith %}
 
-<h2>{{pull_request.title}}</h2>
+<div class="wrap">
+
+<h2>{{ pull_request.title }}</h2>
+
 <p class="description">{{pull_request.body}}</p>
 
+<h3>Commits</h3>
 {% include 'commit_list.html' %}
 
-<h2>Files Changed</h2>
+<h3>Files Changed</h3>
 <div id="files-changed">
-{% for f in files %}
-<div class="changed-file">
-  <a href="{{f.link}}">{{f.path}}</a>
-  {% if f.total_comment_count %}(
-  {% if f.comment_count %} {{ f.comment_count }} comments {% endif %}
-  {% if f.draft_comment_count %} {{ f.draft_comment_count }} drafts {% endif %}
-  ){% endif %}
-<div>
-{% endfor %}
+  {% for f in files %}
+  <div class="changed-file">
+    <a href="{{f.link}}">{{f.path}}</a>
+    {% if f.total_comment_count %}
+      (
+      {% if f.comment_count %} {{ f.comment_count }} comments {% endif %}
+      {% if f.draft_comment_count %} {{ f.draft_comment_count }} drafts {% endif %}
+      )
+    {% endif %}
+  <div>
+    {% endfor %}
 </div>
 
-<h2>Discussion</h2>
+<h3>Discussion</h3>
 <div class="comments-list" id="top-level-comments"></div>
 
-<h2>Draft Comments</h2>
+<h3>Draft Comments</h3>
 <div class="comments-list" id="draft-comments"></div>
-
-<form action="/publish_draft_comments" method="POST">
-  <textarea rows=4 name="top_level_comment"></textarea>
+<form action="/publish_draft_comments" method="POST" class="form">
+  <div class="form-group">
+    <textarea class="form-control" rows=4 name="top_level_comment"></textarea>
+  </div>
   <input type=hidden name=owner value="{{owner}}">
   <input type=hidden name=repo value="{{repo}}">
   <input type=hidden name=pull_number value="{{pull_request.number}}">
-  <input type="submit" value="Publish Comments">
+  <input class="btn btn-success" type="submit" value="Submit">
 </form>
+
+</div>
 
 {% include 'comment_templates.html' %}
 
-<script src="/static/jquery-2.1.1.min.js"></script>
-<script src="/static/underscore-min.js"></script>
-<script src="/static/jsdifflib/difflib.js"></script>
-<script src="/static/jsdifflib/diffview.js"></script>
-<script src="/static/showdown/showdown.js"></script>
-<script src="/static/showdown/github.js"></script>
-<script src="/static/pull_request.js"></script>
-
 <script type="text/javascript">
-var logged_in_user = {{logged_in_user|tojson}};
-var owner = {{owner|tojson}};
-var repo = {{repo|tojson}};
-var pr_number = {{pull_request.number|tojson}};
-var pr_owner = {{pull_request.user.login|tojson}};
-var updated_at = {{pull_request.updated_at|tojson}};
-var comments = {{comments|tojson|safe}};
+var logged_in_user = {{logged_in_user | tojson}};
+var owner = {{owner | tojson}};
+var repo = {{repo | tojson}};
+var pr_number = {{pull_request.number | tojson}};
+var pr_owner = {{pull_request.user.login | tojson}};
+var updated_at = {{pull_request.updated_at | tojson}};
+var comments = {{comments | tojson | safe}};
 
 $(function() {
   // Top-level comments
@@ -82,16 +83,14 @@ $(function() {
 
   // Simplify comment view
   $('.comment-body').map(function(_, div) { collapseQuotes(div) });
-
   // Format descriptions with markdown.
   $('.description').html(new Showdown.converter().makeHtml({{pull_request.body|tojson|safe}}));
 
   checkForUpdates(owner, repo, pr_number, updated_at);
-});
+ });
 
-  $('#show-diff').on('click', function() {
-    $(this).closest('form').submit();
-  });
+ $('#show-diff').on('click', function() {
+   $(this).closest('form').submit();
+ });
 </script>
-
-</body>
+{% endblock %}

@@ -1,28 +1,39 @@
-<h2>Commits</h2>
-<form action='#'>
-{% for commit in commits %}
-<input name='sha1' type=radio value={{commit.sha}} {%if commit.selected_left %}checked{%endif%}>
-<input name='sha2' type=radio value={{commit.sha}} {%if commit.selected_right %}checked{%endif%}>
-{{commit.commit.committer.date}}
-{% if commit.is_outdated %}
-OUTDATED
-{% endif %}
-<span class='sha'>{{commit.sha|truncate(7, True, end='')}}</span>
-{{commit.short_message}}
-{{commit.author.login}}
-{% if commit.total_comment_count %}(
-  {% if commit.comment_count %}
-    {{ commit.comment_count }} comments
-  {% endif %}
-  {% if commit.draft_comment_count %}
-    {{ commit.draft_comment_count }} drafts
-  {% endif %}
-){% endif %}
-<br>
-{% endfor %}
-{% if path %}
-<input type=hidden name=path value="{{path}}">
-{% endif %}
+<form class="form commit-list" action="#">
+  <div class="inner-commit-list">
+    {% for commit in commits %}
+    <div class="commit-compare">
+      <input name="sha1" type="radio" value="{{commit.sha}}"
+             {% if commit.selected_left %} checked {% endif %}>
+      <input name="sha2" type="radio" value="{{commit.sha}}"
+             {% if commit.selected_right %} checked {% endif %}>
 
-<p><button id="show-diff">Show Diff</button></p>
+      {{commit.commit.committer.date}}
+      {% if commit.is_outdated %}
+      OUTDATED
+      {% endif %}
+      <span class="sha">{{ commit.sha|truncate(7, True, end="") }}</span>
+      {{commit.short_message}}
+      {{commit.author.login}}
+
+      {% if commit.total_comment_count %}
+      (
+        {% if commit.comment_count %}
+          {{ commit.comment_count }} comments
+        {% endif %}
+
+        {% if commit.draft_comment_count %}
+          {{ commit.draft_comment_count }} drafts
+        {% endif %}
+      )
+      {% endif %}
+    </div>
+
+    {% endfor %}
+  </div>
+
+  {% if path %}
+  <input type="hidden" name="path" value="{{path}}">
+  {% endif %}
+
+  <button class="btn btn-info" id="show-diff">Show Diff</button>
 </form>
