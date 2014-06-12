@@ -12,10 +12,10 @@
     <a href="{{pr.url|safe}}">[#{{pr.number}}] {{pr.title}}</a>
     (by {{pr.user.login}})
   </li>
+  {% endfor %}
 </ul>
 <br>
 
 </div>
-{% endfor %}
 
 {% endblock %}
