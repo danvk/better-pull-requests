@@ -1,0 +1,72 @@
+body {
+    padding: 17px;
+}
+
+div.wrap {
+    margin: auto auto;
+    max-width: 800px;
+}
+
+div#refresh-update-available {
+    display: none;
+}
+
+/* commit_list.html */
+form.commit-list {
+    padding: 13px;
+    border-radius: 3px;
+    border: 1px solid #dadada;
+    background: #edf4fa;
+}
+
+form.commit-list .inner-commit-list {
+    margin-bottom: 13px;
+}
+
+form.commit-list .commit-compare {
+    font-family: monospace;
+}
+
+form.commit-list input {
+    position: relative;
+    top: 5px;
+    width: 20px;
+    height: 20px;
+}
+
+/* comment_templates.html */
+div.inline-comment {
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    background: white;
+    padding: 17px;
+    margin: 13px 0;
+}
+
+div.inline-comment .user {
+    font-weight: bold;
+}
+
+div.inline-comment .added-note-on {
+    font-style: italic;
+}
+
+div.inline-comment .inline-comment-body {
+    margin: 7px;
+}
+
+div.inline-editable-comment {
+    padding: 17px;
+}
+
+div.inline-editable-comment textarea {
+    margin-bottom: 17px;
+}
+
+div.inline-editable-comment .save-comment {
+    float: right;
+}
+
+/* file_diff.html */
+div#thediff {
+}

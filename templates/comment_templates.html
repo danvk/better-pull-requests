@@ -1,11 +1,13 @@
-<div id="editable-comment-template" class="inline-comment inline-editable-comment" style="display:none;"><textarea rows=4></textarea>
-<button class="save-comment">Save</button>
-<button class="discard-comment">Discard</button></div>
+<div id="editable-comment-template" class="inline-editable-comment" style="display:none;">
+  <textarea rows=4 class="form-control"></textarea>
+  <button class="save-comment btn btn-success">Save</button>
+  <button class="discard-comment btn btn-default">Discard</button>
+</div>
 
 <div id="comment-template" class="inline-comment" style="display:none;">
   <div class="is_draft" style="display:none">(Draft)</div>
-  <div class="metadata"><span class="user"></span> added a note on <span class="updated_at"></span></div>
-  <a class="github-link" href="">view on github</a>
+  <div class="metadata"><span class="user"></span> <span class="added-note-on">added a note on</span> <span class="updated_at"></span></div>
+  <a class="github-link" href=""><span class="glyphicon glyphicon-share-alt"></span> view on github</a>
   <div class="inline-comment-body"></div>
   <a href="#" class="discard" style="display:none">Discard</a>
   <a href="#" class="reply" style="display:none">Reply</a>

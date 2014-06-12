@@ -1,0 +1,15 @@
+<!-- TODO: implement this -->
+
+{% macro nav_bar(active_tab) -%}
+<ul class="nav nav-tabs">
+  <li class="{{ 'active' if active_tab == 'home' else '' }}">
+    <a href="/"></a>
+  </li>
+  <li class="{{ 'active' if active_tab == 'runs' else '' }}">
+    <a href="/runs">Runs</a>
+  </li>
+  <li class="{{ 'active' if active_tab == 'callers' else '' }}">
+    <a href="/callers">Callers</a>
+  </li>
+</ul>
+{%- endmacro %}

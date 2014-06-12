@@ -1,18 +1,21 @@
 from collections import defaultdict
 import json
-import urllib
+import logging
+import os
+import re
 import requests
 import sys
-import re
-import os
-import logging
+import urllib
 
-from flask import Flask, url_for, render_template, request, jsonify, session, redirect, flash
+from flask import (Flask, url_for, render_template, flash,
+                   request, jsonify, session, redirect)
 from flask_debugtoolbar import DebugToolbarExtension
 
 import github
 import github_comments
 import comment_db
+
+
 
 class BasicConfig:
     DEBUG_TB_INTERCEPT_REDIRECTS=False
@@ -22,7 +25,9 @@ app.config.from_object(BasicConfig)
 app.config.from_envvar('BETTER_PR_CONFIG')
 toolbar = DebugToolbarExtension(app)
 
-if not (app.config['GITHUB_CLIENT_SECRET'] and app.config['GITHUB_CLIENT_ID'] and app.config['ROOT_URI']):
+if not (app.config['GITHUB_CLIENT_SECRET']
+        and app.config['GITHUB_CLIENT_ID']
+        and app.config['ROOT_URI']):
     sys.stderr.write('''
 You need to fill out a config file before running this server.
 See README.md for details.\n
@@ -51,10 +56,12 @@ else:
 @app.route("/<owner>/<repo>/pulls")
 def repo(owner, repo):
     token = session['token']
-    pull_requests = github.get_pull_requests(token, owner, repo, bust_cache=True)
+    pull_requests = github.get_pull_requests(token, owner, repo,
+                                             bust_cache=True)
 
     for pr in pull_requests:
-        pr['url'] = url_for('pull', owner=owner, repo=repo, number=pr['number'])
+        pr['url'] = url_for('pull', owner=owner,
+                            repo=repo, number=pr['number'])
 
     return render_template('repo.html',
                            logged_in_user=session['login'],
@@ -86,7 +93,9 @@ def _get_pr_info(session, owner, repo, number, sha1=None, sha2=None, path=None):
         comments['diff_level'].append(db.githubify_comment(comment))
 
     # TODO(danvk): only annotate comments on this file.
-    github_comments.add_line_numbers_to_comments(token, owner, repo, pr['base']['sha'], comments['diff_level'])
+    github_comments.add_line_numbers_to_comments(token, owner, repo,
+                                                 pr['base']['sha'],
+                                                 comments['diff_level'])
 
     commits.reverse()
     # Add an entry for the base commit.
@@ -147,7 +156,8 @@ def pull(owner, repo, number):
     sha2 = request.args.get('sha2', None)
     token = session['token']
 
-    pr, commits, comments, files = _get_pr_info(session, owner, repo, number, sha1=sha1, sha2=sha2)
+    pr, commits, comments, files = _get_pr_info(session, owner, repo, number,
+                                                sha1=sha1, sha2=sha2)
     if not sha1:
         sha1 = [c['sha'] for c in commits if 'selected_left' in c][0]
     if not sha2:
@@ -171,7 +181,8 @@ def file_diff(owner, repo, number):
         return "Incomplete request (need path, sha1, sha2)"
 
     token = session['token']
-    pr, commits, comments, files = _get_pr_info(session, owner, repo, number, path=path, sha1=sha1, sha2=sha2)
+    pr, commits, comments, files = _get_pr_info(session, owner, repo, number,
+                                                path=path, sha1=sha1, sha2=sha2)
 
     unified_diff = github.get_file_diff(token, owner, repo, path, sha1, sha2)
     if not unified_diff:
@@ -221,7 +232,8 @@ def check_for_updates():
     updated_at = request.form['updated_at']
     token = session['token']
 
-    pr = github.get_pull_request(token, owner, repo, pull_number, bust_cache=True)
+    pr = github.get_pull_request(token, owner, repo, pull_number,
+                                 bust_cache=True)
 
     if pr['updated_at'] <= updated_at:
         return "OK"
@@ -269,7 +281,8 @@ def save_draft_comment():
     result = db.add_draft_comment(session['login'], comment)
     result = db.githubify_comment(result)
     # This is a bit roundabout, but more reliable!
-    github_comments.add_line_number_to_comment(token, owner, repo, base_sha, result)
+    github_comments.add_line_number_to_comment(token, owner, repo, base_sha,
+                                               result)
     return jsonify(result)
 
 
@@ -292,7 +305,8 @@ def publish_draft_comments():
     if not token:
         return "You must be signed in to publish comments."
 
-    draft_comments = db.get_draft_comments(session['login'], owner, repo, pull_number)
+    draft_comments = db.get_draft_comments(session['login'], owner, repo,
+                                           pull_number)
     if not draft_comments and not new_top_level:
         return "No comments to publish!"
 
@@ -309,7 +323,8 @@ def publish_draft_comments():
     logging.info('Successfully published %d comments', len(draft_comments))
 
     if new_top_level:
-        result = github.post_issue_comment(token, owner, repo, pull_number, new_top_level)
+        result = github.post_issue_comment(token, owner, repo, pull_number,
+                                           new_top_level)
         if not result:
             return "Unable to publish comment: %s" % new_top_level
 
@@ -339,13 +354,15 @@ def oauth_callback():
     if not code:
         return "Unable to authenticate"
 
-    # Now we POST to github.com/login/oauth/access_token to get an access token.
-    response = requests.post('https://github.com/login/oauth/access_token', data={
+    data = {
         'client_id': app.config['GITHUB_CLIENT_ID'],
         'client_secret': app.config['GITHUB_CLIENT_SECRET'],
         'code': code,
         'redirect_uri': app.config['ROOT_URI'] + '/oauth_callback'
-        }, headers={'Accept': 'application/json'})
+    }
+    # Now we POST to github.com/login/oauth/access_token to get an access token.
+    response = requests.post('https://github.com/login/oauth/access_token',
+                             data, headers={'Accept': 'application/json'})
 
     if response.json() and 'access_token' in response.json():
         session['token'] = response.json()['access_token']
