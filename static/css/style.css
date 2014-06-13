@@ -113,8 +113,8 @@ a.github-link {
 div#thediff {
 }
 
-table.diff {
-  font-family: Consolas, "Liberation Mono", Menlo, Courier, monospace;
+table.diff tbody {
+  font-family: Inconsolata, Consolas, "Liberation Mono", Menlo, Courier, monospace;
   font-size: 12px;
 }
 
