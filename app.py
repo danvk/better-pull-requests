@@ -160,7 +160,8 @@ def _get_pr_info(session, owner, repo, number, sha1=None, sha2=None, path=None):
     def diff_url(path):
         return (url_for('file_diff', owner=owner, repo=repo, number=number) +
                 '?path=' + urllib.quote(path) +
-                '&sha1=' + urllib.quote(sha1) + '&sha2=' + urllib.quote(sha2))
+                '&sha1=' + urllib.quote(sha1) + '&sha2=' + urllib.quote(sha2) +
+                '#diff')
 
     # TODO(danvk): store diffstats in here.
     files = [{

@@ -20,10 +20,11 @@
 
 <p class="description">{{pull_request.body}}</p>
 
-<h3>Commits</h3>
+<a name="commits">
+<a name="commits"><h3>Commits</h3></a>
 {% include 'commit_list.html' %}
 
-<h3>Files Changed</h3>
+<a name="files-changed"><h3>Files Changed</h3></a>
 <div id="files-changed">
   {% for f in files %}
   <div class="changed-file">
