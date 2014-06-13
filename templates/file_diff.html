@@ -77,17 +77,17 @@ var pull_request_url = {{pull_request_url|tojson}};
 
 <script src="/static/js/file_diff.js"></script>
 <script type="text/javascript">
-
 $(function() {
+  displayDiffs(sha1, sha2, beforeContents, afterContents);
+
   // Simplify comment view
   $('.comment-body').map(function(_, div) { collapseQuotes(div) });
 
-  displayDiffs(sha1, sha2, beforeContents, afterContents);
+  // Format descriptions with markdown.
+  $('.description').html(
+    new Showdown.converter().makeHtml({{pull_request.body|tojson|safe}}));
 
   attachHandlers();
-
-  // Format descriptions with markdown.
-  $('.description').html(new Showdown.converter().makeHtml({{pull_request.body|tojson|safe}}));
 
   checkForUpdates(owner, repo, pr_number, updated_at);
 });
