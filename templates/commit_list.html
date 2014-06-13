@@ -1,35 +1,48 @@
+{%- from 'macros/macros.html' import user_with_icon -%}
+
 <form class="form commit-list" action="#">
-  <div class="inner-commit-list">
+  <table class="inner-commit-list" width="100%">
     {% for commit in commits %}
-    <div class="commit-compare">
-      <input name="sha1" type="radio" value="{{commit.sha}}"
-             {% if commit.selected_left %} checked {% endif %}>
-      <input name="sha2" type="radio" value="{{commit.sha}}"
-             {% if commit.selected_right %} checked {% endif %}>
+    <tr class="commit-compare{% if commit.is_outdated %} outdated{% endif %}">
+      <td class="selector">
+        <input name="sha1" type="radio" value="{{commit.sha}}"
+               {% if commit.selected_left %} checked {% endif %}>
+        &nbsp;
+        <input name="sha2" type="radio" value="{{commit.sha}}"
+               {% if commit.selected_right %} checked {% endif %}>
+      </td>
 
-      {{commit.commit.committer.date}}
-      {% if commit.is_outdated %}
-      OUTDATED
+      <td>
+      {% if commit.author %}
+      {{ user_with_icon(commit.author, size=16) }}
       {% endif %}
-      <span class="sha">{{ commit.sha|truncate(7, True, end="") }}</span>
-      {{commit.short_message}}
-      {{commit.author.login}}
+      </td>
 
+      <td class="commit-message">{{commit.short_message}}</td>
+      
+      <td class="comments">
       {% if commit.total_comment_count %}
-      (
         {% if commit.comment_count %}
           {{ commit.comment_count }} comments
         {% endif %}
-
         {% if commit.draft_comment_count %}
           {{ commit.draft_comment_count }} drafts
         {% endif %}
-      )
       {% endif %}
-    </div>
+      </td>
+
+      <td class="date">
+      {% if commit.commit.committer.date %}
+      {% if commit.html_url %}<a href="{{commit.html_url}}">{% endif %}
+      <span class="elapsed-time" title="{{commit.commit.committer.date|datetime}}">{{commit.commit.committer.date|elapsed_time}}</span>{% if commit.html_url %}</a>{% endif %}
+      {% if commit.is_outdated %}(outdated){% endif %}
+      {% endif %}
+      </td>
+
+    </tr>
 
     {% endfor %}
-  </div>
+  </table>
 
   {% if path %}
   <input type="hidden" name="path" value="{{path}}">

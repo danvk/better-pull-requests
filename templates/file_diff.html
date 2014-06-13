@@ -16,10 +16,12 @@
 
 <p class="description">{{pull_request.body}}</p>
 
-<a name="commits"><h3>Commits</h3></a>
+<a name="commits"></a>
+<h3>Commits</h3>
 {% include 'commit_list.html' %}
 
-<a name="files-changed"><h3>Files Changed</h3></a>
+<a name="files-changed"></a>
+<h3>Files Changed</h3>
 <div id="files-changed">
   {% for f in files %}
     {% if f.path == path %}
@@ -50,7 +52,8 @@
 
 <hr/>
 
-<a name="diff"><h3 name="diff">{{path}}</h3></a>
+<a name="diff"></a>
+<h3 name="diff">{{path}}</h3>
 <div id="thediff"></div>
 
 {% include 'comment_templates.html' %}

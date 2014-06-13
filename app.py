@@ -14,6 +14,7 @@ from flask_debugtoolbar import DebugToolbarExtension
 import github
 import github_comments
 import comment_db
+import jinja_filters
 
 
 
@@ -24,6 +25,7 @@ app = Flask(__name__)
 app.config.from_object(BasicConfig)
 app.config.from_envvar('BETTER_PR_CONFIG')
 toolbar = DebugToolbarExtension(app)
+jinja_filters.install_handlers(app)
 
 if not (app.config['GITHUB_CLIENT_SECRET']
         and app.config['GITHUB_CLIENT_ID']
@@ -124,9 +126,9 @@ def _get_pr_info(session, owner, repo, number, sha1=None, sha2=None, path=None):
         'commit': {
             'message': '(%s)' % pr['base']['ref'],
             'author': {'date': ''},
-            'committer': {'date': ''}
+            'committer': {'date': ''}  # sorts to the start
         },
-        'author': {'login': ''}
+        'author': pr['base']['user']
     })
 
     commits.sort(key=lambda c: c['commit']['committer']['date'])
