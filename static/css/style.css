@@ -115,10 +115,10 @@ div#thediff {
 
 table.diff tbody {
   font-family: Inconsolata, Consolas, "Liberation Mono", Menlo, Courier, monospace;
-  font-size: 12px;
+  font-size: 13px;
 }
 
-/* This is 80 characters in 12px Courier */
+/* This is 80 characters in 13px Inconsolata */
 table.diff td {
   width: 570px;
   min-width: 570px;

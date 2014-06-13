@@ -144,20 +144,28 @@ $(function() {
     // console.log(e.keyCode);
   });
 
-  $('.diff td').on('dblclick', function(e) {
+  $('.diff td, .diff th').on('dblclick', function(e) {
+      var $target = $(e.target);
+      var td = this;
+
+      if (this.tagName == 'TH') {
+        td = $(this).next('td').get(0);
+        $target = $(td);
+      }
+
       // Click has to be on the code, not another comment.
-      if ($(e.target).closest('.inline-comment').length > 0) return;
+      if ($target.closest('.inline-comment').length > 0) return;
 
       // Should only have one draft at a time.
-      var $textarea = $(e.target).closest('td').find('textarea');
+      var $textarea = $target.closest('td').find('textarea');
       if ($textarea.length > 0) {
         $textarea.focus();
         e.preventDefault();
         return;
       }
 
-      var onLeft = $(e.target).is('.before');
-      var lineClasses = this.classList;
+      var onLeft = $target.is('.before');
+      var lineClasses = td.classList;
       var lineNumber;
       for (var i = 0; i < lineClasses.length; i++) {
         var m = /line-([0-9]+)/.exec(lineClasses[i]);
