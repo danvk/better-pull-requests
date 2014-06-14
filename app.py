@@ -237,6 +237,8 @@ def file_diff(owner, repo, number):
 
     pull_request_url = url_for('pull', owner=owner, repo=repo, number=number) + '?sha1=%s&sha2=%s' % (sha1, sha2)
 
+    github_file_urls = map(lambda sha: 'http://github.com/%s/%s/blob/%s/%s' % (owner, repo, sha, path), [sha1, sha2])
+
     return render_template('file_diff.html',
                            logged_in_user=session['login'],
                            owner=owner, repo=repo,
@@ -248,7 +250,8 @@ def file_diff(owner, repo, number):
                            files=files,
                            prev_file=prev_file, next_file=next_file,
                            github_diff=github_diff,
-                           pull_request_url=pull_request_url)
+                           pull_request_url=pull_request_url,
+                           github_file_urls=github_file_urls)
 
 
 @app.route("/check_for_updates", methods=['POST'])

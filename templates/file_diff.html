@@ -12,7 +12,7 @@
 
 <div class="wrap">
 
-<a class="github-link" href="{{ pull_request.html_url }}" alt="View on github.com"><span class="github-icon"></span></a>
+<a class="github-link" href="{{ pull_request.html_url }}" title="View on github.com"><span class="github-icon"></span></a>
 <h2><a href="{{pull_request_url}}">{{pull_request.title}}</a></h2>
 
 <p class="description">{{pull_request.body}}</p>
@@ -77,6 +77,7 @@ var updated_at = {{pull_request.updated_at|tojson}};
 
 var diff_comments = {{comments.diff_level|tojson|safe}};
 var pull_request_url = {{pull_request_url|tojson}};
+var github_file_urls = {{github_file_urls|tojson}};
 </script>
 
 <script src="/static/js/file_diff.js"></script>
@@ -92,6 +93,18 @@ $(function() {
     new Showdown.converter().makeHtml({{pull_request.body|tojson|safe}}));
 
   attachHandlers();
+
+  // Add github links to the files
+  var $titles = $('#thediff').find('th.texttitle');
+  if ($titles.length == 2) {
+    $titles.each(function(i, title) {
+      var $link = $($('.github-link').get(0)).clone();
+      $link.find('.github-icon').addClass('github-icon-16');
+      $link.attr('href', github_file_urls[i]);
+      $link.find('img').attr('src', '16px');
+      $(title).append($link);
+    });
+  }
 
   checkForUpdates(owner, repo, pr_number, updated_at);
 });

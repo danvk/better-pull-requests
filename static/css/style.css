@@ -136,6 +136,12 @@ a.github-link {
     height: 20px;
 }
 
+.github-icon-16 {
+    background-size: 16px 16px;
+    width: 16px;
+    height: 16px;
+}
+
 .comment-footer {
     margin-left: 15px;
     margin-right: 15px;
@@ -179,4 +185,13 @@ table.diff .replace {
 }
 table.diff .char-replace {
     background-color: #FEDC87;
+}
+
+table.diff th.texttitle .github-link {
+  margin-right: 5px;
+  margin-top: 5px;
+}
+
+table.diff th.titletext {
+  vertical-align: center;
 }
