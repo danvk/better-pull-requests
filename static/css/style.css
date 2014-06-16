@@ -11,6 +11,13 @@ div#refresh-update-available {
     display: none;
 }
 
+/* Pull Request Descriptions */
+div.description {
+    max-height: 150px;
+    overflow: hidden;
+    overflow-y: auto;
+}
+
 /* commit_list.html */
 form.commit-list {
     /*
@@ -57,6 +64,7 @@ form.commit-list a {
 
 .commit-compare.outdated, .commit-compare.outdated a {
     color: gray;
+    background-color: #f7f7f7;
 }
 
 form.commit-list .user {
@@ -82,6 +90,7 @@ form.commit-list .commit-message {
 form.commit-list .date {
     color: #bbb;
     font-size: 12px;
+    width: 100px;
 }
 
 /* comment_templates.html */
@@ -176,9 +185,9 @@ table.diff tbody {
 
 /* This is 80 characters in 13px Inconsolata */
 table.diff td {
-    width: 570px;
-    min-width: 570px;
-    max-width: 570px;
+    width: 650px;
+    min-width: 650px;
+    max-width: 650px;
 }
 
 table.diff .insert {
@@ -201,4 +210,14 @@ table.diff th.texttitle .github-link {
 
 table.diff th.titletext {
   vertical-align: center;
+}
+
+#prev-next {
+  display:none;
+}
+
+/* Pull Request draft preview */
+.code-snippet {
+    font-family: Inconsolata, Consolas, "Liberation Mono", Menlo, Courier, monospace;
+    white-space: pre;
 }
