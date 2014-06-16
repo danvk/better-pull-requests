@@ -16,6 +16,5 @@
 
 
 {% macro user_with_icon(user, size=20) -%}
-<img height={{size}} width={{size}} class="avatar" src="{{user.avatar_url}}">
-<span class="user">{{user.login}}</span>
+<span class="user-icon"><img height={{size}} width={{size}} class="avatar" src="{{user.avatar_url}}">&nbsp;<span class="user">{{user.login}}</span></span>
 {%- endmacro %}

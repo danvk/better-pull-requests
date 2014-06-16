@@ -37,6 +37,13 @@ form.commit-list tr:first-child td {
     border-top: none;
 }
 
+form.commit-list td.selector {
+    width: 75px;  /* enough room for two radio buttons */
+}
+span.user-icon {
+    white-space: pre;  /* don't separate icon and user name */
+}
+
 form.commit-list .inner-commit-list {
     margin-bottom: 13px;
 }
@@ -69,7 +76,7 @@ form.commit-list input {
 form.commit-list .commit-message {
     /* display: inline-block; */
     padding-left: 25px;
-    font-family: monospace;
+    font-family: Inconsolata, Consolas, "Liberation Mono", Menlo, Courier, monospace;
 }
 
 form.commit-list .date {
