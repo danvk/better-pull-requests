@@ -221,3 +221,9 @@ table.diff th.titletext {
     font-family: Inconsolata, Consolas, "Liberation Mono", Menlo, Courier, monospace;
     white-space: pre;
 }
+
+
+/* subscriptions.html */
+ul.followed-repos {
+  font-size: 16px;
+}

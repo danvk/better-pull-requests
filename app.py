@@ -355,10 +355,6 @@ def publish_draft_comments():
     if not pull_number:
         return "Incomplete post_comment request, missing pull_number"
 
-    token = session['token']
-    if not token:
-        return "You must be signed in to publish comments."
-
     draft_comments = db.get_draft_comments(session['login'], owner, repo,
                                            pull_number)
     if not draft_comments and not new_top_level:
@@ -403,8 +399,13 @@ def discard_draft_comment():
 
 
 @app.route('/')
+@logged_in
 def index():
-    return "hello!"
+    token = session['token']
+    subscriptions = github.get_user_subscriptions(token, session['login'])
+    return render_template('subscriptions.html',
+                           logged_in_user=session['login'],
+                           subscriptions=subscriptions)
 
 
 @app.route('/login')
