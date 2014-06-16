@@ -9,13 +9,14 @@ import urllib
 
 from flask import (Flask, url_for, render_template, flash,
                    request, jsonify, session, redirect)
+from flask_oauthlib.client import OAuth
 from flask_debugtoolbar import DebugToolbarExtension
 
 import github
 import github_comments
 import comment_db
 import jinja_filters
-
+from logged_in import logged_in
 
 
 class BasicConfig:
@@ -38,6 +39,19 @@ See README.md for details.\n
 
 db = comment_db.CommentDb()
 
+oauth = OAuth(app)
+github_auth = oauth.remote_app(
+    'github',
+    consumer_key=app.config['GITHUB_CLIENT_ID'],
+    consumer_secret=app.config['GITHUB_CLIENT_SECRET'],
+    request_token_params={'scope': 'repo,user'},
+    base_url='https://api.github.com/',
+    request_token_url=None,
+    access_token_method='POST',
+    access_token_url='https://github.com/login/oauth/access_token',
+    authorize_url='https://github.com/login/oauth/authorize'
+)
+
 if app.config.get('LOG_FILE'):
     sys.stderr.write('Logging to a file\n')
     file_handler = logging.FileHandler(app.config['LOG_FILE'])
@@ -54,8 +68,14 @@ else:
     log.setLevel(logging.DEBUG)
     #log.addHandler(handler)
 
+@app.route("/<owner>/<repo>")
+@logged_in
+def plain_repo(owner, repo):
+    return redirect(url_for("repo", owner=owner, repo=repo))
+
 
 @app.route("/<owner>/<repo>/pulls")
+@logged_in
 def repo(owner, repo):
     token = session['token']
     pull_requests = github.get_pull_requests(token, owner, repo,
@@ -178,6 +198,7 @@ def _get_pr_info(session, owner, repo, number, sha1=None, sha2=None, path=None):
 
 
 @app.route("/<owner>/<repo>/pull/<number>")
+@logged_in
 def pull(owner, repo, number):
     sha1 = request.args.get('sha1', None)
     sha2 = request.args.get('sha2', None)
@@ -200,6 +221,7 @@ def pull(owner, repo, number):
 
 
 @app.route("/<owner>/<repo>/pull/<number>/diff")
+@logged_in
 def file_diff(owner, repo, number):
     path = request.args.get('path', '')
     sha1 = request.args.get('sha1', '')
@@ -274,6 +296,7 @@ def check_for_updates():
 
 
 @app.route("/save_draft", methods=['POST'])
+@logged_in
 def save_draft_comment():
     owner = request.form['owner']
     repo = request.form['repo']
@@ -317,6 +340,7 @@ def save_draft_comment():
 
 
 @app.route("/publish_draft_comments", methods=['POST'])
+@logged_in
 def publish_draft_comments():
     owner = request.form['owner']
     repo = request.form['repo']
@@ -366,6 +390,7 @@ def publish_draft_comments():
 
 
 @app.route("/discard_draft_comment", methods=['POST'])
+@logged_in
 def discard_draft_comment():
     comment_id = int(request.form['id'])
     if not comment_id:
@@ -377,46 +402,47 @@ def discard_draft_comment():
         return "Error"
 
 
-@app.route("/oauth_callback")
-def oauth_callback():
-    state = request.args.get('state', '')  # TODO(danvk): verify this
-    code = request.args.get('code', '')
-    if not code:
-        return "Unable to authenticate"
+@app.route('/')
+def index():
+    return "hello!"
 
-    data = {
-        'client_id': app.config['GITHUB_CLIENT_ID'],
-        'client_secret': app.config['GITHUB_CLIENT_SECRET'],
-        'code': code,
-        'redirect_uri': app.config['ROOT_URI'] + '/oauth_callback'
-    }
-    # Now we POST to github.com/login/oauth/access_token to get an access token.
-    response = requests.post('https://github.com/login/oauth/access_token',
-                             data, headers={'Accept': 'application/json'})
 
-    if response.json() and 'access_token' in response.json():
-        session['token'] = response.json()['access_token']
-    else:
-        return "Unable to authenticate."
+@app.route('/login')
+def login():
+    return github_auth.authorize(callback=url_for('authorized', _external=True, next=request.args.get('next') or request.referrer or None))
 
-    # Fetch basic user data to store in session state
+
+@app.route('/logout')
+def logout():
+    session.pop('token', None)
+    return redirect(url_for('index'))
+
+
+@app.route('/oauth_callback')
+@github_auth.authorized_handler
+def authorized(resp):
+    next_url = request.args.get('next') or url_for('index')
+    if resp is None:
+        return 'Access denied: reason=%s error=%s' % (
+            request.args['error_reason'],
+            request.args['error_description']
+        )
+    session['token'] = resp['access_token']
     user_info = github.get_current_user_info(session['token'])
     if not user_info:
         return "Unable to get user info."
     session['login'] = user_info['login']
+    return redirect(next_url)
 
-    return "Authenticated successfully!"
 
+@github_auth.tokengetter
+def get_github_oauth_token():
+    token = session.get('token')
+    if token:
+        return (token, '')
+    else:
+        return token
 
-@app.route("/")
-def hello():
-    url = 'https://github.com/login/oauth/authorize?' + urllib.urlencode({
-        'client_id': app.config['GITHUB_CLIENT_ID'],
-        'redirect_uri': app.config['ROOT_URI'] + '/oauth_callback',
-        'scope': 'repo,user',
-        'state': 1234  # TODO(danvk): really set this
-        })
-    return render_template('index.html', oauthurl=url)
 
 
 if __name__ == "__main__":
