@@ -16,13 +16,23 @@
   <h2>Subscribed Repositories</h2>
 <ul class="followed-repos">
 {% for repo in subscriptions %}
-<li><a href="/{{repo.full_name}}/pulls">{{repo.full_name}}</a>
-({{repo.open_issues_count}} issue{% if repo.open_issues_count > 1%}s{% endif %})
+<li owner="{{repo.owner.login}}" repo="{{repo.name}}"><a href="/{{repo.full_name}}/pulls">{{repo.full_name}}</a>
+<span class='repo-data'>(<span class='pr-count'>? open pull requests</span>, {{repo.open_issues_count}} issue{% if repo.open_issues_count > 1%}s{% endif %})</span>
 <a href="{{ repo.html_url }}" alt="View on github.com"><span class="github-icon github-icon-16"></span></a>
 </li>
 {% endfor %}
 </ul>
 
+<div id="own-pull-requests">
 </div>
+
+</div>
+
+<script src="/static/js/subscriptions.js"></script>
+<script type="text/javascript">
+
+addPullRequestCounts($('.followed-repos').get(0), $('#own-pull-requests').get(0));
+
+</script>
 
 {% endblock %}

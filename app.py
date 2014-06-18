@@ -30,18 +30,11 @@ def plain_repo(owner, repo):
 @app.route("/<owner>/<repo>/pulls")
 @logged_in
 def repo(owner, repo):
-    token = session['token']
-    pull_requests = github.get_pull_requests(token, owner, repo,
-                                             bust_cache=True)
-
-    for pr in pull_requests:
-        pr['url'] = url_for('pull', owner=owner,
-                            repo=repo, number=pr['number'])
-
-    return render_template('repo.html',
-                           logged_in_user=session['login'],
-                           pull_requests=pull_requests)
-
+    result = gitcritic.handle_get_pull_requests(owner, repo)
+    if result:
+        return render_template('repo.html', **result)
+    else:
+        return "Error"
 
 
 @app.route("/<owner>/<repo>/pull/<number>")
@@ -121,6 +114,14 @@ def file_diff(owner, repo, number):
                            github_diff=github_diff,
                            pull_request_url=pull_request_url,
                            github_file_urls=github_file_urls)
+
+
+@app.route("/count_open_pull_requests", methods=['POST'])
+@logged_in
+def count_open_pull_requests():
+    owner = request.form['owner']
+    repo = request.form['repo']
+    return jsonify(gitcritic.count_open_pull_requests(owner, repo))
 
 
 @app.route("/check_for_updates", methods=['POST'])

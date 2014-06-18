@@ -3,7 +3,7 @@
 from collections import defaultdict
 import re
 
-from flask import url_for
+from flask import url_for, session, request
 import github
 import github_comments
 import urllib
@@ -118,3 +118,31 @@ def get_pr_info(db, session, owner, repo, number, sha1=None, sha2=None, path=Non
 
     return pr, commits, comments, files
 
+
+def handle_get_pull_requests(owner, repo):
+    '''Returns template vars for open pull requests for a repo.'''
+    token = session['token']
+    pull_requests = github.get_pull_requests(token, owner, repo,
+                                             bust_cache=True)
+
+    for pr in pull_requests:
+        pr['url'] = url_for('pull', owner=owner,
+                            repo=repo, number=pr['number'])
+
+    return {
+            'logged_in_user': session['login'],
+            'pull_requests': pull_requests
+    }
+
+
+def count_open_pull_requests(owner, repo):
+    token = session['token']
+    login = session['login']
+    pull_requests = github.get_pull_requests(token, owner, repo,
+                                             bust_cache=True)
+
+    own_prs = filter(lambda pr: pr['user']['login'] == login, pull_requests)
+    return {
+            'count': len(pull_requests),
+            'own': own_prs
+    }
