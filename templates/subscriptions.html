@@ -1,6 +1,6 @@
 {%- extends "base.html" -%}
 
-{% block title %} Your Subscriptions {% endblock %}
+{% block title %} Subscriptions {% endblock %}
 
 {% block body %}
 {% with messages = get_flashed_messages() %}
@@ -13,10 +13,11 @@
 
 <div class="wrap">
 
-  <h2>Repositories you Follow</h2>
+  <h2>Subscribed Repositories</h2>
 <ul class="followed-repos">
 {% for repo in subscriptions %}
 <li><a href="/{{repo.full_name}}/pulls">{{repo.full_name}}</a>
+({{repo.open_issues_count}} issue{% if repo.open_issues_count > 1%}s{% endif %})
 <a href="{{ repo.html_url }}" alt="View on github.com"><span class="github-icon github-icon-16"></span></a>
 </li>
 {% endfor %}

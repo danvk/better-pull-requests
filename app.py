@@ -401,11 +401,7 @@ def discard_draft_comment():
 @app.route('/')
 @logged_in
 def index():
-    token = session['token']
-    subscriptions = github.get_user_subscriptions(token, session['login'])
-    return render_template('subscriptions.html',
-                           logged_in_user=session['login'],
-                           subscriptions=subscriptions)
+    return user(session['login'])
 
 
 @app.route('/login')
@@ -444,6 +440,20 @@ def get_github_oauth_token():
     else:
         return token
 
+
+@app.route('/<user>')
+@logged_in
+def user(user):
+    token = session['token']
+    subscriptions = github.get_user_subscriptions(token, user)
+
+    # Filter out repos without open issues. Since PRs are issues, these can't
+    # have any open pull requests.
+    subscriptions = filter(lambda s: s['open_issues_count'] > 0, subscriptions)
+
+    return render_template('subscriptions.html',
+                           logged_in_user=session['login'],
+                           subscriptions=subscriptions)
 
 
 if __name__ == "__main__":

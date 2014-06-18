@@ -240,10 +240,12 @@ def post_issue_comment(token, owner, repo, issue_number, body):
         'body': body
         }, owner=owner, repo=repo, issue_number=issue_number)
 
+
 # caching: never
 def get_user_subscriptions(token, user):
     '''Returns a list of repos to which the user subscribes.'''
-    url = (GITHUB_API_ROOT + '/users/%(user)s/subscriptions') % {'user': user}
+    # TODO(danvk): follow paginated results here.
+    url = (GITHUB_API_ROOT + '/users/%(user)s/subscriptions?per_page=100') % {'user': user}
     subscriptions = _fetch_api(token, url)
     subscriptions.sort(key=lambda repo: repo['updated_at'])
     subscriptions.reverse()
