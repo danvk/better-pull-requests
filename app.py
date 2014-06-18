@@ -1,61 +1,23 @@
-from collections import defaultdict
 import json
 import logging
 import os
 import re
-import requests
 import sys
-import urllib
 
-from flask import (Flask, url_for, render_template, flash,
+from flask import (url_for, render_template, flash,
                    request, jsonify, session, redirect)
-from flask_debugtoolbar import DebugToolbarExtension
 
 import authentication
+import config
 import github
 import github_comments
 import gitcritic
 import comment_db
-import jinja_filters
 from logged_in import logged_in
 
 
-class BasicConfig:
-    DEBUG_TB_INTERCEPT_REDIRECTS=False
-
-app = Flask(__name__)
-app.config.from_object(BasicConfig)
-app.config.from_envvar('BETTER_PR_CONFIG')
-toolbar = DebugToolbarExtension(app)
-jinja_filters.install_handlers(app)
-
-if not (app.config['GITHUB_CLIENT_SECRET']
-        and app.config['GITHUB_CLIENT_ID']
-        and app.config['ROOT_URI']):
-    sys.stderr.write('''
-You need to fill out a config file before running this server.
-See README.md for details.\n
-''')
-    sys.exit(1)
-
+app = config.create_app()
 db = comment_db.CommentDb()
-
-if app.config.get('LOG_FILE'):
-    sys.stderr.write('Logging to a file\n')
-    file_handler = logging.FileHandler(app.config['LOG_FILE'])
-    file_handler.setLevel(logging.INFO)
-    app.logger.addHandler(file_handler)
-    log = logging.getLogger('werkzeug')
-    log.setLevel(logging.DEBUG)
-    log.addHandler(file_handler)
-else:
-    handler = logging.StreamHandler()
-    handler.setLevel(logging.DEBUG)
-    app.logger.addHandler(handler)
-    log = logging.getLogger('werkzeug')
-    log.setLevel(logging.DEBUG)
-    #log.addHandler(handler)
-
 authentication.install_github_oauth(app)
 
 
