@@ -1,7 +1,12 @@
 '''Application logic and muxing'''
 
+from collections import defaultdict
+import re
+
+from flask import url_for
 import github
 import github_comments
+import urllib
 
 def get_pr_info(db, session, owner, repo, number, sha1=None, sha2=None, path=None):
     '''Gets basic information about a pull request.
