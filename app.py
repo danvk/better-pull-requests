@@ -3,6 +3,7 @@ import logging
 import os
 import re
 import sys
+import urllib
 
 from flask import (url_for, render_template, flash,
                    request, jsonify, session, redirect)
@@ -42,26 +43,36 @@ def pull(owner, repo, number):
     sha1 = request.args.get('sha1', None)
     sha2 = request.args.get('sha2', None)
     token = session['token']
+    login = session['login']
 
-    pr, commits, comments, files = gitcritic.get_pr_info(
-            db, session, owner, repo, number, sha1=sha1, sha2=sha2)
-    if not sha1:
-        sha1 = [c['sha'] for c in commits if 'selected_left' in c][0]
-    if not sha2:
-        sha2 = [c['sha'] for c in commits if 'selected_right' in c][0]
+    pr = gitcritic.PullRequest.from_github(db, token, login, owner, repo, number)
+
+    if not sha1: sha1 = pr.pull_request['base']['sha']
+    if not sha2: sha2 = pr.pull_request['head']['sha']
+
+    for commit in pr.commits:
+        if commit['sha'] == sha1: commit['selected_left'] = True
+        if commit['sha'] == sha2: commit['selected_right'] = True
+
+    for f in pr.files:
+        f.update({
+            'link': url_for('file_diff', owner=owner, repo=repo, number=number) + '?path=' + urllib.quote(f['filename']) + '&sha1=' + urllib.quote(sha1) + '&sha2=' + urllib.quote(sha2) + '#diff'
+        })
 
     return render_template('pull_request.html',
-                           logged_in_user=session['login'],
+                           logged_in_user=login,
                            owner=owner, repo=repo,
-                           commits=commits,
-                           pull_request=pr,
-                           comments=comments,
-                           files=files)
+                           commits=pr.commits,
+                           pull_request=pr.pull_request,
+                           comments=pr.comments,
+                           files=pr.files)
 
 
 @app.route("/<owner>/<repo>/pull/<number>/diff")
 @logged_in
 def file_diff(owner, repo, number):
+    token = session['token']
+    login = session['login']
     path = request.args.get('path', '')
     sha1 = request.args.get('sha1', '')
     sha2 = request.args.get('sha2', '')
@@ -69,8 +80,7 @@ def file_diff(owner, repo, number):
         return "Incomplete request (need path, sha1, sha2)"
 
     token = session['token']
-    pr, commits, comments, files = gitcritic.get_pr_info(
-            db, session, owner, repo, number, path=path, sha1=sha1, sha2=sha2)
+    pr = gitcritic.PullRequest.from_github(db, token, login, owner, repo, number)
 
     unified_diff = github.get_file_diff(token, owner, repo, path, sha1, sha2)
     if not unified_diff:
@@ -79,36 +89,38 @@ def file_diff(owner, repo, number):
     # github excludes the first four header lines of "git diff"
     github_diff = '\n'.join(unified_diff.split('\n')[4:])
 
-    github_comments.add_in_response_to(pr, comments['diff_level'])
-
     before = github.get_file_at_ref(token, owner, repo, path, sha1) or ''
     after = github.get_file_at_ref(token, owner, repo, path, sha2) or ''
 
-    idxs = [i for (i, f) in enumerate(files) if f['path'] == path]
+    for commit in pr.commits:
+        if commit['sha'] == sha1: commit['selected_left'] = True
+        if commit['sha'] == sha2: commit['selected_right'] = True
+
+    idxs = [i for (i, f) in enumerate(pr.files) if f['filename'] == path]
 
     if idxs:
         file_idx = idxs[0]
-        prev_file = files[file_idx - 1] if file_idx > 0 else None
-        next_file = files[file_idx + 1] if file_idx < len(files) - 1 else None
+        prev_file = pr.files[file_idx - 1] if file_idx > 0 else None
+        next_file = pr.files[file_idx + 1] if file_idx < len(pr.files) - 1 else None
     else:
         # The current file is not part of this diff.
         # Just do something sensible.
         prev_file = None
-        next_file = files[0] if len(files) > 0 else None
+        next_file = pr.files[0] if len(pr.files) > 0 else None
 
     pull_request_url = url_for('pull', owner=owner, repo=repo, number=number) + '?sha1=%s&sha2=%s' % (sha1, sha2)
 
     github_file_urls = map(lambda sha: 'http://github.com/%s/%s/blob/%s/%s' % (owner, repo, sha, path), [sha1, sha2])
 
     return render_template('file_diff.html',
-                           logged_in_user=session['login'],
+                           logged_in_user=login,
                            owner=owner, repo=repo,
-                           pull_request=pr,
-                           commits=commits,
-                           comments=comments,
+                           pull_request=pr.pull_request,
+                           commits=pr.commits,
+                           comments=pr.comments,
+                           files=pr.files,
                            path=path, sha1=sha1, sha2=sha2,
                            before_contents=before, after_contents=after,
-                           files=files,
                            prev_file=prev_file, next_file=next_file,
                            github_diff=github_diff,
                            pull_request_url=pull_request_url,

@@ -90,7 +90,7 @@ form.commit-list .commit-message {
 form.commit-list .date {
     color: #bbb;
     font-size: 12px;
-    width: 100px;
+    width: 110px;
 }
 
 /* comment_templates.html */

@@ -21,16 +21,18 @@
 
 <div class="description">{{pull_request.body}}</div>
 
+<!--
 <a name="commits"></a>
 <h3>Commits</h3>
 {% include 'commit_list.html' %}
+-->
 
 <a name="files-changed"></a>
 <h3>Files Changed</h3>
 <div id="files-changed">
   {% for f in files %}
   <div class="changed-file">
-    <a href="{{f.link}}">{{f.path}}</a>
+    <a href="{{f.link}}">{{f.filename}}</a>
     {% if f.total_comment_count %}
       (
       {% if f.comment_count %} {{ f.comment_count }} comments {% endif %}
