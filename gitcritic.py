@@ -1,6 +1,7 @@
 '''Application logic and muxing'''
 
 from collections import defaultdict
+import json
 import logging
 import re
 import sys
@@ -9,6 +10,95 @@ from flask import url_for, session, request
 import github
 import github_comments
 import urllib
+
+
+class PullRequestCritic(object):
+    def __init__(self, db, token, owner, repo, number):
+        self._db = db
+        self._token = token
+        self._owner = owner
+        self._repo = repo
+        self._number = number
+
+        self._get_pr_info()
+
+    def _api(self, fn, *args):
+        all_args = [self._token, self._owner, self._repo] + list(args)
+        return fn(*all_args)
+
+    def _get_outdated_commit_shas(self, commits, comments):
+        known_shas = set([c['sha'] for c in commits])
+        outdated_shas = set()
+        for comment in comments['diff_level']:
+            sha = comment['original_commit_id']
+            if sha not in known_shas:
+                outdated_shas.add(sha)
+
+        return list(outdated_shas)
+
+    def _reconstruct_commit(self, sha):
+        commit = self._api(github.get_commit_info, sha)
+        return {
+            'commit': commit,
+            'is_outdated': True,
+            'author': {
+                'login': ''
+            },
+            'parents': commit['parents'],
+            'sha': commit['sha'],
+            'html_url': commit['html_url']
+        }
+
+    def _get_outdated_commits(self, commits, comments):
+        shas = self._get_outdated_commit_shas(commits, comments)
+        return [self._reconstruct_commit(sha) for sha in shas]
+
+    def _get_fake_head_commit(self, pr):
+        return {
+            'sha': pr['base']['sha'],
+            'commit': {
+                'message': '(%s)' % pr['base']['ref'],
+                'author': {'date': ''},
+                'committer': {'date': ''}  # sorts to the start
+            },
+            'author': pr['base']['user']
+        }
+
+    def _get_pr_info(self):
+        '''Fill in basic information about a pull request.'''
+        pr = self._api(github.get_pull_request, self._number)
+
+        # get a list of files which have been affected by this PR, base to head.
+        sha1 = pr['base']['sha']
+        sha2 = pr['head']['sha']
+        diff_info = self._api(github.get_diff_info, sha1, sha2)
+        files = diff_info['files']
+
+        # get a list of commits in the pull request.
+        # We only know refs for outdated commits from the comments on them.
+        commits = self._api(github.get_pull_request_commits, self._number)
+        comments = self._api(github.get_pull_request_comments, self._number)
+        outdated_commits = self._get_outdated_commits(commits, comments)
+        commits.extend(outdated_commits)
+
+        # Add an entry for the base commit.
+        commits.append(self._get_fake_head_commit(pr))
+        commits.sort(key=lambda c: c['commit']['committer']['date'])
+        commits.reverse()
+
+        # there may be additional files which were reverted. We need to query every
+        # commit in the pull request to find these.
+        sha_to_commit = {}
+        for commit in commits:
+            sha = commit['sha']
+            sha_to_commit[sha] = self._api(github.get_commit_info, sha)
+
+        self.pull_request = pr
+        self.commits = commits
+        self.comments = comments
+        self.files = files
+        self.sha_to_commit = sha_to_commit
+
 
 def get_pr_info(db, session, owner, repo, number, sha1=None, sha2=None, path=None):
     '''Gets basic information about a pull request.
