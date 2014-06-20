@@ -15,7 +15,6 @@ import gitcritic
 import comment_db
 from logged_in import logged_in
 
-
 app = config.create_app()
 db = comment_db.CommentDb()
 authentication.install_github_oauth(app)

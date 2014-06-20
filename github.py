@@ -13,6 +13,9 @@ GITHUB_API_ROOT = 'https://api.github.com'
 
 WHITESPACE_RE = re.compile(r'^[ \t\n\r]*$')
 
+logger = logging.getLogger(__name__)
+
+
 # TODO(danvk): inject a cache from the server module
 #from werkzeug.contrib.cache import SimpleCache
 #cache = SimpleCache()
@@ -52,7 +55,7 @@ def _fetch_url(token, url, extra_headers=None, bust_cache=False):
     cached = cache.get(key)
     if cached is not None and not bust_cache:
         return cached
-    logging.info('Uncached request for %s', url)
+    logger.info('Uncached request for %s', url)
 
     headers = {}
     if token:
@@ -61,7 +64,7 @@ def _fetch_url(token, url, extra_headers=None, bust_cache=False):
         headers.update(extra_headers)
     r = requests.get(url, headers=headers)
     if not r.ok:
-        logging.warn('Request for %s failed.', url)
+        logger.warn('Request for %s failed.', url)
         return False
 
     response = r.text
@@ -72,13 +75,13 @@ def _fetch_url(token, url, extra_headers=None, bust_cache=False):
 def _post_api(token, path, obj, **kwargs):
     url = (GITHUB_API_ROOT + path) % kwargs
     assert '%' not in url
-    logging.info('Posting to %s', url)
+    logger.info('Posting to %s', url)
     r = requests.post(url, headers={'Authorization': 'token ' + token, 'Content-type': 'application/json'}, data=json.dumps(obj))
     if not r.ok:
-        logging.warn('Request for %s failed.', url)
-        logging.warn('%s', r)
-        logging.warn('%s', r.text)
-        logging.warn('Posted:\n%s', json.dumps(obj))
+        logger.warn('Request for %s failed.', url)
+        logger.warn('%s', r)
+        logger.warn('%s', r.text)
+        logger.warn('Posted:\n%s', json.dumps(obj))
         return False
 
     return r.json()
@@ -94,7 +97,7 @@ def _fetch_api(token, url, bust_cache=False):
     try:
         j = json.loads(response)
     except ValueError:
-        logging.warn('Failed to parse as JSON:\n%s', response)
+        logger.warn('Failed to parse as JSON:\n%s', response)
         raise
     return j
 
@@ -178,7 +181,7 @@ def get_file_diff(token, owner, repo, path, sha1, sha2):
     url = (GITHUB_API_ROOT + '/repos/%(owner)s/%(repo)s/compare/%(sha1)s...%(sha2)s') % {'owner': owner, 'repo': repo, 'sha1': sha1, 'sha2': sha2}
     unified_diff = _fetch_url(token, url, extra_headers={'Accept': 'application/vnd.github.3.diff'})
     if not unified_diff:
-        logging.info('Unable to get unified diff %s', url)
+        logger.info('Unable to get unified diff %s', url)
         return None
 
     # Parse out the bit that's relevant to the file 
@@ -192,7 +195,7 @@ def get_file_diff(token, owner, repo, path, sha1, sha2):
             break
 
     if file_idx == -1:
-        logging.info('Unable to find diff for %s in %s', path, url)
+        logger.info('Unable to find diff for %s in %s', path, url)
         return None
 
     start = ms[file_idx].start()

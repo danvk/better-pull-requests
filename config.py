@@ -40,9 +40,13 @@ def create_app():
     else:
         handler = logging.StreamHandler()
         handler.setLevel(logging.DEBUG)
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        handler.setFormatter(formatter)
+        
         app.logger.addHandler(handler)
-        log = logging.getLogger('werkzeug')
-        log.setLevel(logging.DEBUG)
-        #log.addHandler(handler)
+        for logname in ['github', 'werkzeug']:
+            log = logging.getLogger(logname)
+            log.setLevel(logging.DEBUG)
+            log.addHandler(handler)
 
     return app
