@@ -21,11 +21,9 @@
 
 <div class="description">{{pull_request.body}}</div>
 
-<!--
 <a name="commits"></a>
 <h3>Commits</h3>
 {% include 'commit_list.html' %}
--->
 
 <a name="files-changed"></a>
 <h3>Files Changed</h3>
@@ -39,8 +37,8 @@
       {% if f.draft_comment_count %} {{ f.draft_comment_count }} drafts {% endif %}
       )
     {% endif %}
-  <div>
-    {% endfor %}
+  </div>
+  {% endfor %}
 </div>
 
 <h3>Discussion</h3>
