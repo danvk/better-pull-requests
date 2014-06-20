@@ -1,7 +1,9 @@
 '''Application logic and muxing'''
 
 from collections import defaultdict
+import logging
 import re
+import sys
 
 from flask import url_for, session, request
 import github
@@ -119,15 +121,19 @@ def get_pr_info(db, session, owner, repo, number, sha1=None, sha2=None, path=Non
     return pr, commits, comments, files
 
 
+def _add_urls_to_pull_requests(prs):
+    for pr in prs:
+        repo = pr['base']['repo']
+        pr['url'] = url_for('pull', owner=repo['owner']['login'],
+                repo=repo['name'], number=pr['number'])
+
+
 def handle_get_pull_requests(owner, repo):
     '''Returns template vars for open pull requests for a repo.'''
     token = session['token']
     pull_requests = github.get_pull_requests(token, owner, repo,
                                              bust_cache=True)
-
-    for pr in pull_requests:
-        pr['url'] = url_for('pull', owner=owner,
-                            repo=repo, number=pr['number'])
+    _add_urls_to_pull_requests(pull_requests)
 
     return {
             'logged_in_user': session['login'],
@@ -140,6 +146,7 @@ def count_open_pull_requests(owner, repo):
     login = session['login']
     pull_requests = github.get_pull_requests(token, owner, repo,
                                              bust_cache=True)
+    _add_urls_to_pull_requests(pull_requests)
 
     own_prs = filter(lambda pr: pr['user']['login'] == login, pull_requests)
     return {

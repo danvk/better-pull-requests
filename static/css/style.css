@@ -227,3 +227,7 @@ table.diff th.titletext {
 ul.followed-repos {
   font-size: 16px;
 }
+
+.pull-request {
+  clear: both;
+}

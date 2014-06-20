@@ -1,3 +1,13 @@
+function renderPullRequest(pr) {
+  var $prEl = $('#pr-template').clone().removeAttr('id').show();
+
+  $prEl.find('.repo-name').text(pr['base']['repo']['full_name']);
+  $prEl.find('.main-link').text(pr['title']).attr('href', pr['url']);
+  $prEl.find('.github-link').attr('href', pr['html_url']);
+
+  return $prEl.get(0);
+}
+
 function addPullRequestCounts(followedReposEl, ownPullRequestsEl) {
   $(followedReposEl).find('li').each(function(_, el) {
     var owner = $(el).attr('owner');
@@ -11,10 +21,9 @@ function addPullRequestCounts(followedReposEl, ownPullRequestsEl) {
           $(el).find('.repo-data').empty();
         }
 
-        if (response.own_prs) {
-          console.log(response.own_prs);
-          $.each(response.own_prs, function(_, pr) {
-            $(ownPullRequestsEl).append($('<div>').text(pr.title));
+        if (response.own) {
+          $.each(response.own, function(_, pr) {
+            $(ownPullRequestsEl).append(renderPullRequest(pr));
           });
         }
       });
