@@ -10,31 +10,35 @@
   <a href="#" onclick="location.reload();">Reload</a> the page to see it.
 </div>
 
-<div class="wrap">
-
 <a class="github-link" href="{{ pull_request.html_url }}" title="View on github.com"><span class="github-icon"></span></a>
 <h2><a href="{{pull_request_url}}">{{pull_request.title}}</a></h2>
 
 <div class="description">{{pull_request.body}}</div>
 
-<a name="commits"></a>
-<h3>Commits</h3>
-{% include 'commit_list.html' %}
+<div class="row">
+  <div class="col-lg-6">
+    <a name="commits"></a>
+    <h3>Commits</h3>
+    {% include 'commit_list.html' %}
+  </div>
 
-<a name="files-changed"></a>
-<h3>Files Changed</h3>
-<div id="files-changed">
-  {% for f in files %}
-    {% if f.path == path %}
-    <div class="diff-link diff-current">
-      {{f.path}}
+  <div class="col-lg-6">
+    <a name="files-changed"></a>
+    <h3>Files Changed</h3>
+    <div id="files-changed">
+      {% for f in files %}
+        {% if f.filename == path %}
+        <div class="diff-link diff-current">
+          {{f.filename}}
+        </div>
+        {% else %}
+        <div class="diff-link">
+          <a href="{{f.link}}">{{f.filename}}</a>
+        </div>
+        {% endif %}
+      {% endfor %}
     </div>
-    {% else %}
-    <div class="diff-link">
-      <a href="{{f.link}}">{{f.path}}</a>
-    </div>
-    {% endif %}
-  {% endfor %}
+  </div>
 </div>
 
 {% if prev_file or next_file %}
@@ -48,8 +52,6 @@
   {% endif %}
 </div>
 {% endif %}
-
-</div>
 
 <hr/>
 

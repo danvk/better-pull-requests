@@ -6,11 +6,11 @@ import logging
 import re
 import sys
 import json
+import urllib
 
 from flask import url_for, session, request
 import github
 import github_comments
-import urllib
 
 
 class PullRequest(object):
@@ -139,6 +139,14 @@ class PullRequest(object):
 
     def _augment_files(self):
         pass
+
+    def add_file_diff_links(self, sha1, sha2):
+        for f in self.files:
+            f.update({
+                'link': url_for('file_diff', owner=self._owner, repo=self._repo, number=self._number) + '?path=' + urllib.quote(f['filename']) + '&sha1=' + urllib.quote(sha1) + '&sha2=' + urllib.quote(sha2) + '#diff'
+            })
+
+
 
 
 def _add_urls_to_pull_requests(prs):

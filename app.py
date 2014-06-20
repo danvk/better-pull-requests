@@ -54,10 +54,7 @@ def pull(owner, repo, number):
         if commit['sha'] == sha1: commit['selected_left'] = True
         if commit['sha'] == sha2: commit['selected_right'] = True
 
-    for f in pr.files:
-        f.update({
-            'link': url_for('file_diff', owner=owner, repo=repo, number=number) + '?path=' + urllib.quote(f['filename']) + '&sha1=' + urllib.quote(sha1) + '&sha2=' + urllib.quote(sha2) + '#diff'
-        })
+    pr.add_file_diff_links(sha1, sha2)
 
     return render_template('pull_request.html',
                            logged_in_user=login,
@@ -96,12 +93,15 @@ def file_diff(owner, repo, number):
         if commit['sha'] == sha1: commit['selected_left'] = True
         if commit['sha'] == sha2: commit['selected_right'] = True
 
+    pr.add_file_diff_links(sha1, sha2)
+
     idxs = [i for (i, f) in enumerate(pr.files) if f['filename'] == path]
 
     if idxs:
         file_idx = idxs[0]
         prev_file = pr.files[file_idx - 1] if file_idx > 0 else None
         next_file = pr.files[file_idx + 1] if file_idx < len(pr.files) - 1 else None
+        app.logger.info("next_file: %s", next_file)
     else:
         # The current file is not part of this diff.
         # Just do something sensible.

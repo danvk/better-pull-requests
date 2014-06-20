@@ -14,31 +14,35 @@
   {% endif %}
 {% endwith %}
 
-<div class="wrap">
-
 <a class="github-link" href="{{ pull_request.html_url }}" alt="View on github.com"><span class="github-icon"></span></a>
 <h2>{{ pull_request.title }}</h2>
 
 <div class="description">{{pull_request.body}}</div>
 
-<a name="commits"></a>
-<h3>Commits</h3>
-{% include 'commit_list.html' %}
-
-<a name="files-changed"></a>
-<h3>Files Changed</h3>
-<div id="files-changed">
-  {% for f in files %}
-  <div class="changed-file">
-    <a href="{{f.link}}">{{f.filename}}</a>
-    {% if f.total_comment_count %}
-      (
-      {% if f.comment_count %} {{ f.comment_count }} comments {% endif %}
-      {% if f.draft_comment_count %} {{ f.draft_comment_count }} drafts {% endif %}
-      )
-    {% endif %}
+<div class="row">
+  <div class="col-lg-6">
+    <a name="commits"></a>
+    <h3>Commits</h3>
+    {% include 'commit_list.html' %}
   </div>
-  {% endfor %}
+
+  <div class="col-lg-6">
+    <a name="files-changed"></a>
+    <h3>Files Changed</h3>
+    <div id="files-changed">
+      {% for f in files %}
+      <div class="changed-file">
+        <a href="{{f.link}}">{{f.filename}}</a>
+        {% if f.total_comment_count %}
+          (
+          {% if f.comment_count %} {{ f.comment_count }} comments {% endif %}
+          {% if f.draft_comment_count %} {{ f.draft_comment_count }} drafts {% endif %}
+          )
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
 </div>
 
 <h3>Discussion</h3>
@@ -55,8 +59,6 @@
   <input type=hidden name=pull_number value="{{pull_request.number}}">
   <input class="btn btn-success" type="submit" value="Publish">
 </form>
-
-</div>
 
 {% include 'comment_templates.html' %}
 
