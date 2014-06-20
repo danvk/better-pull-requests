@@ -126,7 +126,7 @@ def get_pull_request(token, owner, repo, pull_number, bust_cache=False):
 
 # caching: never expires
 def get_commit_info(token, owner, repo, sha):
-    url = (GITHUB_API_ROOT + '/repos/%(owner)s/%(repo)s/git/commits/%(sha)s') % {'owner': owner, 'repo': repo, 'sha': sha}
+    url = (GITHUB_API_ROOT + '/repos/%(owner)s/%(repo)s/commits/%(sha)s') % {'owner': owner, 'repo': repo, 'sha': sha}
     return _fetch_api(token, url)
 
 

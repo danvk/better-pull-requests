@@ -5,6 +5,7 @@ import json
 import logging
 import re
 import sys
+import json
 
 from flask import url_for, session, request
 import github
@@ -13,21 +14,28 @@ import urllib
 
 
 class PullRequestCritic(object):
-    def __init__(self, db, token, owner, repo, number):
-        self._db = db
-        self._token = token
-        self._owner = owner
-        self._repo = repo
-        self._number = number
+    @staticmethod
+    def from_github(db, token, login, owner, repo, number):
+        pr = PullRequestCritic()
+        pr._db = db
+        pr._token = token
+        pr._login = login
+        pr._owner = owner
+        pr._repo = repo
+        pr._number = number
 
-        self._get_pr_info()
+        pr._get_pr_info()
+        return pr
+
+    def __init__(self):
+        pass
 
     def _api(self, fn, *args):
         all_args = [self._token, self._owner, self._repo] + list(args)
         return fn(*all_args)
 
-    def _get_outdated_commit_shas(self, commits, comments):
-        known_shas = set([c['sha'] for c in commits])
+    def _get_outdated_commit_shas(self, commit_shas, comments):
+        known_shas = set(commit_shas)
         outdated_shas = set()
         for comment in comments['diff_level']:
             sha = comment['original_commit_id']
@@ -36,68 +44,84 @@ class PullRequestCritic(object):
 
         return list(outdated_shas)
 
-    def _reconstruct_commit(self, sha):
-        commit = self._api(github.get_commit_info, sha)
-        return {
-            'commit': commit,
-            'is_outdated': True,
-            'author': {
-                'login': ''
-            },
-            'parents': commit['parents'],
-            'sha': commit['sha'],
-            'html_url': commit['html_url']
-        }
+    def _attach_comments(self):
+        '''Adds 'comments' fields commit, file and file/commit pair.'''
+        sha_to_commit = {commit['sha']: commit for commit in self.commits}
+        sha_file_map = {}
+        for commit in self.commits:
+            commit['comments'] = []
+            for f in commit['files']:
+                f['comments'] = []
+                sha_file_map[(commit['sha'], f['filename'])] = f
+        path_to_file = {f['filename']: f for f in self.files}
+        for f in self.files:
+            f['comments'] = []
 
-    def _get_outdated_commits(self, commits, comments):
-        shas = self._get_outdated_commit_shas(commits, comments)
-        return [self._reconstruct_commit(sha) for sha in shas]
+        for comment in self.comments['diff_level']:
+            sha = comment['original_commit_id']
+            sha_to_commit[sha]['comments'].append(comment)
+            sha_file_map[(sha, comment['path'])]['comments'].append(comment)
+            path_to_file[comment['path']]['comments'].append(comment)
 
-    def _get_fake_head_commit(self, pr):
-        return {
-            'sha': pr['base']['sha'],
-            'commit': {
-                'message': '(%s)' % pr['base']['ref'],
-                'author': {'date': ''},
-                'committer': {'date': ''}  # sorts to the start
-            },
-            'author': pr['base']['user']
-        }
 
     def _get_pr_info(self):
         '''Fill in basic information about a pull request.'''
         pr = self._api(github.get_pull_request, self._number)
 
-        # get a list of files which have been affected by this PR, base to head.
+        # get a list of files which have been affected by this PR, base to
+        # head.
         sha1 = pr['base']['sha']
         sha2 = pr['head']['sha']
         diff_info = self._api(github.get_diff_info, sha1, sha2)
         files = diff_info['files']
 
-        # get a list of commits in the pull request.
-        # We only know refs for outdated commits from the comments on them.
-        commits = self._api(github.get_pull_request_commits, self._number)
+        # get a list of commits in the pull request. The API does not return
+        # "outdated" commits or the base commit. We add these using auxiliary
+        # data.
+        commit_shas = [c['sha'] for c in self._api(github.get_pull_request_commits, self._number)]
         comments = self._api(github.get_pull_request_comments, self._number)
-        outdated_commits = self._get_outdated_commits(commits, comments)
-        commits.extend(outdated_commits)
+        outdated_commit_shas = self._get_outdated_commit_shas(commit_shas, comments)
+        commit_shas.extend(outdated_commit_shas)
+        commit_shas.append(pr['base']['sha'])
 
-        # Add an entry for the base commit.
-        commits.append(self._get_fake_head_commit(pr))
+        # Get "thick" commit data.
+        # This includes a list of modified files, whereas
+        # get_pull_request_commits does not. This gives us information about
+        # reverted files.
+        commits = []
+        for sha in commit_shas:
+            commits.append(self._api(github.get_commit_info, sha))
         commits.sort(key=lambda c: c['commit']['committer']['date'])
         commits.reverse()
 
-        # there may be additional files which were reverted. We need to query every
-        # commit in the pull request to find these.
-        sha_to_commit = {}
-        for commit in commits:
-            sha = commit['sha']
-            sha_to_commit[sha] = self._api(github.get_commit_info, sha)
+        # Merge draft and published comments.
+        draft_comments = self._db.get_draft_comments(
+                self._login, self._owner, self._repo, self._number)
+        for comment in draft_comments:
+            comments['diff_level'].append(self._db.githubify_comment(comment))
 
         self.pull_request = pr
         self.commits = commits
         self.comments = comments
         self.files = files
-        self.sha_to_commit = sha_to_commit
+
+        self._attach_comments()
+        self.reverted_files = self._find_reverted_files()
+
+    def _find_reverted_files(self):
+        '''Look for files appearing only in intermediate commits.'''
+        files = set([f['filename'] for f in self.files])
+        reverted_files = set()
+        for commit in self.commits[:-1]:
+            if len(commit['parents']) >= 2:
+                # ignore merge commits.
+                # See http://stackoverflow.com/questions/6713652/git-diff-unique-to-merge-commit
+                continue
+            for f in commit['files']:
+                path = f['filename']
+                if path not in files:
+                    reverted_files.add(path)
+        return list(reverted_files)
 
 
 def get_pr_info(db, session, owner, repo, number, sha1=None, sha2=None, path=None):
