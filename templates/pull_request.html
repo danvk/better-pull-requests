@@ -95,7 +95,7 @@ $(function() {
   checkForUpdates(owner, repo, pr_number, updated_at);
  });
 
- $('#show-diff').on('click', function() {
+ $('.commit-compare input[type=radio]').on('click', function() {
    $(this).closest('form').submit();
  });
 </script>

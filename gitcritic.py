@@ -46,21 +46,26 @@ class PullRequest(object):
 
     def _attach_comments(self):
         '''Adds 'comments' fields commit, file and file/commit pair.'''
-        sha_to_commit = {commit['sha']: commit for commit in self.commits}
+        sha_to_commit = {}
+        for commit in self.commits:
+          sha_to_commit[commit['sha']] = commit
         sha_file_map = {}
         for commit in self.commits:
             commit['comments'] = []
             for f in commit['files']:
                 f['comments'] = []
                 sha_file_map[(commit['sha'], f['filename'])] = f
-        path_to_file = {f['filename']: f for f in self.files}
+        path_to_file = {}
         for f in self.files:
             f['comments'] = []
+            path_to_file[f['filename']] = f
 
         for comment in self.comments['diff_level']:
             sha = comment['original_commit_id']
             sha_to_commit[sha]['comments'].append(comment)
-            sha_file_map[(sha, comment['path'])]['comments'].append(comment)
+            pair = (sha, comment['path'])
+            if pair in sha_file_map:
+              sha_file_map[pair]['comments'].append(comment)
             path_to_file[comment['path']]['comments'].append(comment)
 
 
