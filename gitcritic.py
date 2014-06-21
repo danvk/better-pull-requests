@@ -158,13 +158,24 @@ class PullRequest(object):
         return list(reverted_files)
 
     def _augment_commits(self):
-        for commit in self.commits:
+        base_index = -1
+        for idx, commit in enumerate(self.commits):
             commit.update({
                 'short_message':
                     re.sub(r'[\n\r].*', '', commit['commit']['message']),
             })
             if commit['sha'] == self.pull_request['base']['sha']:
                 commit['short_message'] = '(base)'
+                base_index = idx
+
+        # move the base commit to the bottom.
+        # Even if that's not where it belongs chronologically, it is where
+        # it belongs logically.
+        if base_index >= 0:
+            base_commit = self.commits[base_index]
+            del self.commits[base_index]
+            self.commits.append(base_commit)
+
 
     def _augment_files(self):
         pass
@@ -174,8 +185,6 @@ class PullRequest(object):
             f.update({
                 'link': url_for('file_diff', owner=self._owner, repo=self._repo, number=self._number) + '?path=' + urllib.quote(f['filename']) + '&sha1=' + urllib.quote(sha1) + '&sha2=' + urllib.quote(sha2) + '#diff'
             })
-
-
 
 
 def _add_urls_to_pull_requests(prs):

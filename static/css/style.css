@@ -37,16 +37,21 @@ form.commit-list table {
 form.commit-list td {
     border-top: 1px solid #e5e5e5;
     padding: 7px 15px;
+    padding-right: 0;
     line-height: 16px;
     vertical-align: top;
 }
 form.commit-list tr:first-child td {
     border-top: none;
 }
+form.commit-list tr.continuation td {
+    border-top: none;
+    padding-top: 0;
+}
 
 form.commit-list td.selector {
-    width: 75px;  /* enough room for two radio buttons */
-    min-width: 75px;
+    width: 60px;  /* enough room for two radio buttons */
+    min-width: 60px;
 }
 span.user-icon {
     white-space: pre;  /* don't separate icon and user name */
@@ -84,14 +89,16 @@ form.commit-list input {
 
 form.commit-list .commit-message {
     /* display: inline-block; */
-    padding-left: 25px;
     font-family: Inconsolata, Consolas, "Liberation Mono", Menlo, Courier, monospace;
 }
 
 form.commit-list .date {
     color: #bbb;
     font-size: 12px;
-    width: 110px;
+}
+
+form.commit-list .comments {
+    font-size: 12px;
 }
 
 /* comment_templates.html */

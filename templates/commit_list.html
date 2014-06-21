@@ -17,8 +17,6 @@
       {{ user_with_icon(commit.author, size=16) }}
       {% endif %}
       </td>
-
-      <td class="commit-message">{{commit.short_message}}</td>
       
       <td class="comments">
       {% if commit.total_comment_count %}
@@ -39,6 +37,9 @@
       {% endif %}
       </td>
 
+    <tr class="continuation">
+      <td>&nbsp;</td>
+      <td colspan=3 class="commit-message">{{commit.short_message|truncate(60,True)}}</td>
     </tr>
 
     {% endfor %}

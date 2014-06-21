@@ -109,6 +109,14 @@ $(function() {
   }
 
   checkForUpdates(owner, repo, pr_number, updated_at);
+
+  $('.commit-compare input[type=radio]').on('click', function() {
+    var sha1 = $('input[name=sha1]:checked').attr('value');
+    var sha2 = $('input[name=sha2]:checked').attr('value');
+    if (sha1 == sha2) return;
+
+    $(this).closest('form').submit();
+  });
 });
 </script>
 {% endblock %}
