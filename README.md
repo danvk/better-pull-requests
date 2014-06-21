@@ -46,3 +46,12 @@ like.
 Once you've registered your app, you need to put its ID and secret into a
 configuration. The provided config.template file shows you what this should
 look like.
+
+Testing
+=======
+
+gitcritic has a simple golden screenshot test. To use it, install casperjs
+(e.g. "brew install casperjs" on Mac OS X) and run:
+
+    caspserjs test pdiff-tests/*.js
+
