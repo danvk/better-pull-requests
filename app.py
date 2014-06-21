@@ -204,6 +204,8 @@ def publish_draft_comments():
     owner = request.form['owner']
     repo = request.form['repo']
     pull_number = request.form['pull_number']
+    token = session['token']
+    login = session['login']
 
     new_top_level = request.form['top_level_comment']
 
@@ -214,8 +216,7 @@ def publish_draft_comments():
     if not pull_number:
         return "Incomplete post_comment request, missing pull_number"
 
-    draft_comments = db.get_draft_comments(session['login'], owner, repo,
-                                           pull_number)
+    draft_comments = db.get_draft_comments(login, owner, repo, pull_number)
     if not draft_comments and not new_top_level:
         return "No comments to publish!"
 
