@@ -45,20 +45,24 @@
   </div>
 </div>
 
-<h3>Discussion</h3>
-<div class="comments-list" id="top-level-comments"></div>
+<div class="row">
+  <div class="col-lg-8">
+    <h3>Discussion</h3>
+    <div class="comments-list" id="top-level-comments"></div>
 
-<h3>Draft Comments</h3>
-<div class="comments-list" id="draft-comments"></div>
-<form action="/publish_draft_comments" method="POST" class="form">
-  <div class="form-group">
-    <textarea class="form-control" rows=4 name="top_level_comment"></textarea>
+    <h3>Draft Comments</h3>
+    <div class="comments-list" id="draft-comments"></div>
+    <form action="/publish_draft_comments" method="POST" class="form">
+      <div class="form-group">
+        <textarea class="form-control" rows=4 name="top_level_comment"></textarea>
+      </div>
+      <input type=hidden name=owner value="{{owner}}">
+      <input type=hidden name=repo value="{{repo}}">
+      <input type=hidden name=pull_number value="{{pull_request.number}}">
+      <input class="btn btn-success" type="submit" value="Publish">
+    </form>
   </div>
-  <input type=hidden name=owner value="{{owner}}">
-  <input type=hidden name=repo value="{{repo}}">
-  <input type=hidden name=pull_number value="{{pull_request.number}}">
-  <input class="btn btn-success" type="submit" value="Publish">
-</form>
+</div>
 
 {% include 'comment_templates.html' %}
 

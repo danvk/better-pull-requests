@@ -71,6 +71,21 @@ class PullRequest(object):
                 sha_file_map[pair]['comments'].append(comment)
             path_to_file[comment['path']]['comments'].append(comment)
 
+        def add_counts(obj):
+            cs = obj['comments']
+            obj.update({
+                'total_comment_count': len(cs),
+                'comment_count': len([c for c in cs if 'is_draft' not in c]),
+                'draft_comment_count': len([c for c in cs if 'is_draft' in c])
+            })
+
+        for commit in self.commits:
+            add_counts(commit)
+            for f in commit['files']:
+                add_counts(f)
+        for f in self.files:
+            add_counts(f)
+
 
     def _get_pr_info(self):
         '''Fill in basic information about a pull request.'''
