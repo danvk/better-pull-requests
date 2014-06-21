@@ -31,10 +31,12 @@ class PullRequest(object):
         pass
 
     def _api(self, fn, *args):
+        '''Helper to pass token, owner, and repo to github.py'''
         all_args = [self._token, self._owner, self._repo] + list(args)
         return fn(*all_args)
 
     def _get_outdated_commit_shas(self, commit_shas, comments):
+        '''Outdated commit SHAs are known only from comments on them.'''
         known_shas = set(commit_shas)
         outdated_shas = set()
         for comment in comments['diff_level']:
@@ -62,10 +64,11 @@ class PullRequest(object):
 
         for comment in self.comments['diff_level']:
             sha = comment['original_commit_id']
-            sha_to_commit[sha]['comments'].append(comment)
+            if sha in sha_to_commit:
+                sha_to_commit[sha]['comments'].append(comment)
             pair = (sha, comment['path'])
             if pair in sha_file_map:
-              sha_file_map[pair]['comments'].append(comment)
+                sha_file_map[pair]['comments'].append(comment)
             path_to_file[comment['path']]['comments'].append(comment)
 
 
@@ -85,8 +88,12 @@ class PullRequest(object):
         # data.
         commit_shas = [c['sha'] for c in self._api(github.get_pull_request_commits, self._number)]
         comments = self._api(github.get_pull_request_comments, self._number)
-        outdated_commit_shas = self._get_outdated_commit_shas(commit_shas, comments)
-        commit_shas.extend(outdated_commit_shas)
+
+        # NOTE: need to do some more thinking about outdated commits.
+        # Since the PR's base sha sha may have changed since the commit, it
+        # could be hard to show a meaningful diff.
+        # outdated_commit_shas = self._get_outdated_commit_shas(commit_shas, comments)
+        # commit_shas.extend(outdated_commit_shas)
         commit_shas.append(pr['base']['sha'])
 
         # Get "thick" commit data.
@@ -141,6 +148,8 @@ class PullRequest(object):
                 'short_message':
                     re.sub(r'[\n\r].*', '', commit['commit']['message']),
             })
+            if commit['sha'] == self.pull_request['base']['sha']:
+                commit['short_message'] = '(base)'
 
     def _augment_files(self):
         pass

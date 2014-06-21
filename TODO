@@ -1,7 +1,6 @@
 Cleanup tasks:
 - Move all the JS of pull_request.html into a JS file
 - Use Mocha for JS testing
-- Consolidate shared code between pull_request.html and file_diff.html
 - Write some tests for the Python code
 - Add a no-oauth mode
 - Do github API requests in parallel
@@ -9,9 +8,7 @@ Cleanup tasks:
 User-facing:
 - Embolden unreplied comment counts everywhere
 - When there's no diff, show "no diff", rather than the entire file on both sides.
-- Redirect to OAuth flow whenever it's required, and redirect back to the right place.
 - Return real error codes from XHR methods
 - Make text copy/pastable
 - Show diffstats on pull request view
 - Support commenting on the left side of the diff (thread through /post_comment)
-- Make a better home page: show your open PRs, repos you're watching and their pull requests.
