@@ -14,10 +14,14 @@
   {% endif %}
 {% endwith %}
 
-<a class="github-link" href="{{ pull_request.html_url }}" alt="View on github.com"><span class="github-icon"></span></a>
-<h2>{{ pull_request.title }}</h2>
-
-<div class="description">{{pull_request.body}}</div>
+<div class="row">
+  <div class="col-lg-8">
+    <h2>{{ pull_request.title }}
+    <a class="github-link" href="{{ pull_request.html_url }}" alt="View on github.com"><span class="github-icon"></span></a>
+    </h2>
+    <div class="description">{{pull_request.body}}</div>
+  </div>
+</div>
 
 <div class="row">
   <div class="col-lg-6">
