@@ -146,6 +146,9 @@ def check_for_updates():
     pr = github.get_pull_request(token, owner, repo, pull_number,
                                  bust_cache=True)
 
+    if not pr:
+        return "Error"
+
     if pr['updated_at'] <= updated_at:
         return "OK"
 

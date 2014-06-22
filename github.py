@@ -64,7 +64,7 @@ def _fetch_url(token, url, extra_headers=None, bust_cache=False):
         headers.update(extra_headers)
     r = requests.get(url, headers=headers)
     if not r.ok:
-        logger.warn('Request for %s failed.', url)
+        logger.warn('Request for %s failed: %s', url, r.text)
         return False
 
     response = r.text
@@ -89,7 +89,7 @@ def _post_api(token, path, obj, **kwargs):
 
 def _fetch_api(token, url, bust_cache=False):
     response = _fetch_url(token, url, bust_cache=bust_cache)
-    if response is None:
+    if response is None or response is False:
         return None
     if WHITESPACE_RE.match(response):
         return None

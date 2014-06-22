@@ -53,5 +53,5 @@ Testing
 gitcritic has a simple golden screenshot test. To use it, install casperjs
 (e.g. "brew install casperjs" on Mac OS X) and run:
 
-    caspserjs test pdiff-tests/*.js
-
+    export BETTER_PR_CONFIG=testing.config; python app.py
+    casperjs test pdiff-tests/*.js

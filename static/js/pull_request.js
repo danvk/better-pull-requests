@@ -229,7 +229,7 @@ function checkForUpdates(owner, repo, pull_number, updated_at) {
     'updated_at': updated_at
   })
   .success(function(response) {
-    if (response == "OK") return;
+    if (response != "Update") return;
 
     $('#refresh-update-available').show();
   });
