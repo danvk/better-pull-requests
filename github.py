@@ -1,3 +1,9 @@
+'''Wrapper for the github API.
+
+This maintains an on-disk cache of API calls and maps github API calls onto
+Python functions.
+'''
+
 import sys
 import logging
 import json

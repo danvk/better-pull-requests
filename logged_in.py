@@ -1,4 +1,7 @@
-'''Wrapper to ensure that users are OAuthed into github.'''
+'''Wrapper to ensure that users are OAuthed into github.
+
+If they are not, it redirects them to the OAuth login flow.
+'''
 
 from functools import wraps
 from flask import session, url_for, redirect, request, current_app

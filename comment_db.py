@@ -1,4 +1,8 @@
-"""
+"""On-disk database for draft comments.
+
+Draft comments are the one piece of state that gitcritic needs to track.
+This should use a real DB, but this was easier to set up on an airplane.
+
 Comment:
     key = (login, owner, repo, number)
     # comments in the DB are always drafts.
