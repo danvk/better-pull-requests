@@ -256,6 +256,8 @@ def get_user_subscriptions(token, user):
     # TODO(danvk): follow paginated results here.
     url = (GITHUB_API_ROOT + '/users/%(user)s/subscriptions?per_page=100') % {'user': user}
     subscriptions = _fetch_api(token, url)
+    if not subscriptions:
+        return None
     subscriptions.sort(key=lambda repo: repo['updated_at'])
     subscriptions.reverse()
     return subscriptions
