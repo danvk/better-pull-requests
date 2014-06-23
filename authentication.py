@@ -1,6 +1,6 @@
 '''Views and logic for github OAuth.'''
 
-from flask import url_for, request
+from flask import url_for, request, session
 from flask_oauthlib.client import OAuth
 
 def install_github_oauth(app):
