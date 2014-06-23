@@ -5,7 +5,7 @@ import re
 import sys
 import urllib
 
-from flask import (url_for, render_template, flash,
+from flask import (url_for, render_template, flash, send_from_directory,
                    request, jsonify, session, redirect)
 
 import authentication
@@ -267,11 +267,21 @@ def index():
     return user(session['login'])
 
 
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(os.path.join(app.root_path, 'static/img'),
+                               'favicon.ico',
+                               mimetype='image/vnd.microsoft.icon')
+
+
 @app.route('/<user>')
 @logged_in
 def user(user):
     token = session['token']
     subscriptions = github.get_user_subscriptions(token, user)
+
+    if not subscriptions:
+        subscriptions = []
 
     # Filter out repos without open issues. Since PRs are issues, these can't
     # have any open pull requests.
