@@ -7,7 +7,7 @@ def logged_in(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         # for testing
-        if current_app.config['FAKE_AUTH']:
+        if 'FAKE_AUTH' in current_app.config:
             session.update(current_app.config['FAKE_AUTH'])
 
         if 'token' not in session:
