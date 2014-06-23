@@ -50,7 +50,12 @@ look like.
 Testing
 =======
 
-gitcritic has a simple golden screenshot test. To use it, install casperjs
+To check for silly errors and run the unit tests:
+
+    pylint -E *.py
+    python *_test.py
+
+gitcritic also has a simple golden screenshot test. To use it, install casperjs
 (e.g. "brew install casperjs" on Mac OS X) and run:
 
     export BETTER_PR_CONFIG=testing.config; python app.py
