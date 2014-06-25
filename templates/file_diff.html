@@ -69,8 +69,10 @@
 var logged_in_user = {{logged_in_user|tojson}};
 var pr_owner = {{pull_request.user.login|tojson}};
 
-var beforeContents = {{before_contents|tojson|safe}};
-var afterContents = {{after_contents|tojson|safe}};
+// Filled in via XHR below.
+// Inlining is appealing, but can result in too much data.
+var beforeContents;
+var afterContents;
 
 var sha1 = {{sha1|tojson|safe}};
 var sha2 = {{sha2|tojson|safe}};
@@ -89,6 +91,20 @@ var github_file_urls = {{github_file_urls|tojson}};
 <script src="/static/js/file_diff.js"></script>
 <script type="text/javascript">
 $(function() {
+    var contentsUrl = '/' + owner + '/' + repo + '/get_contents';
+    var beforeDeferred = $.post(contentsUrl, { sha: sha1, path: path });
+    var afterDeferred = $.post(contentsUrl, { sha: sha2, path: path });
+
+    $.when(beforeDeferred, afterDeferred).done(function(before, after) {
+      beforeContents = before[0];
+      afterContents = after[0];
+      updateWithBeforeAfterContents();
+    }).fail(function(e) {
+      alert("Unable to get diff!");
+    });
+});
+
+function updateWithBeforeAfterContents() {
   displayDiffs(sha1, sha2, beforeContents, afterContents);
 
   // Simplify comment view
@@ -121,6 +137,6 @@ $(function() {
 
     $(this).closest('form').submit();
   });
-});
+}
 </script>
 {% endblock %}

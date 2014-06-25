@@ -6,7 +6,7 @@ import sys
 import urllib
 
 from flask import (url_for, render_template, flash, send_from_directory,
-                   request, jsonify, session, redirect)
+                   request, jsonify, session, redirect, Response)
 
 import authentication
 import config
@@ -65,6 +65,23 @@ def pull(owner, repo, number):
                            files=pr.files)
 
 
+@app.route("/<owner>/<repo>/get_contents", methods=['POST'])
+@logged_in
+def get_contents(owner, repo):
+    token = session['token']
+    path = request.form.get('path', '')
+    sha = request.form.get('sha', '')
+    if not (path and sha):
+        e = {"code": "incomplete",
+             "message": "Incomplete request (need path, sha)"}
+        response = jsonify(e)
+        response.status_code = 400
+        return response
+
+    contents = github.get_file_at_ref(token, owner, repo, path, sha) or ''
+    return Response(contents, mimetype='text/plain')
+
+
 @app.route("/<owner>/<repo>/pull/<number>/diff")
 @logged_in
 def file_diff(owner, repo, number):
@@ -76,7 +93,6 @@ def file_diff(owner, repo, number):
     if not (path and sha1 and sha2):
         return "Incomplete request (need path, sha1, sha2)"
 
-    token = session['token']
     pr = gitcritic.PullRequest.from_github(db, token, login, owner, repo, number)
 
     unified_diff = github.get_file_diff(token, owner, repo, path, sha1, sha2)
@@ -86,8 +102,8 @@ def file_diff(owner, repo, number):
     # github excludes the first four header lines of "git diff"
     github_diff = '\n'.join(unified_diff.split('\n')[4:])
 
-    before = github.get_file_at_ref(token, owner, repo, path, sha1) or ''
-    after = github.get_file_at_ref(token, owner, repo, path, sha2) or ''
+    # before = github.get_file_at_ref(token, owner, repo, path, sha1) or ''
+    # after = github.get_file_at_ref(token, owner, repo, path, sha2) or ''
 
     for commit in pr.commits:
         if commit['sha'] == sha1: commit['selected_left'] = True
@@ -120,7 +136,7 @@ def file_diff(owner, repo, number):
                            comments=pr.comments,
                            files=pr.files,
                            path=path, sha1=sha1, sha2=sha2,
-                           before_contents=before, after_contents=after,
+                           # before_contents=before, after_contents=after,
                            prev_file=prev_file, next_file=next_file,
                            github_diff=github_diff,
                            pull_request_url=pull_request_url,

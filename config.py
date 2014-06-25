@@ -44,7 +44,7 @@ def create_app():
         handler.setFormatter(formatter)
         
         app.logger.addHandler(handler)
-        for logname in ['github', 'werkzeug']:
+        for logname in ['github', '']:
             log = logging.getLogger(logname)
             log.setLevel(logging.DEBUG)
             log.addHandler(handler)
