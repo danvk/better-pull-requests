@@ -1,5 +1,14 @@
 better-pull-requests
 ====================
+
+⚠️ ⚠️ ⚠️
+
+_This was an experiment from 2014, back when GitHub's code review tools were much sparser (i.e. no support for two-column diffs or multi-comment reviews). This ultimately led to my discovering [Reviewable](https://reviewable.io/), a hosted "better pull requests" which I highly recommend, and [webdiff](https://github.com/danvk/webdiff), a web-based `git diff` that I use every day._
+
+⚠️ ⚠️ ⚠️
+
+----
+
 An improved UI for github pull requests
 
 The key features this adds on top of github's standard Pull Request UI are:
